@@ -1,4 +1,11 @@
+import java.util.Timer;
+import java.util.TimerTask;
+
 public class Note implements Comparable<Note> {
+	
+	// time in milliseconds for an A0 to decay * frequency of A0
+	// right now is set to 5 seconds
+	private static final long decay_factor = (long)(int)(1000 * 10 * 16.352);
 	
 	// value is the index of the note in a regular 88 key piano, where 1 is A0
 	// key represents what the note is, where 0 is A, 1 is A#, etc. 
@@ -10,6 +17,8 @@ public class Note implements Comparable<Note> {
 	private double frequency;
 	private byte id;
 	private boolean damped;
+	private Timer timer;
+	
 	
 	/*
 	 * Generates a new note object, given the MIDI byte which was received and a
@@ -40,7 +49,9 @@ public class Note implements Comparable<Note> {
 	 */
 	public void undamp() {
 		this.damped = false;
-		parent.decay_note(this);
+		this.timer = new Timer();
+		long decay_time = (long)(int)(1.0/this.frequency * decay_factor);
+		this.timer.schedule(new ReleaseTask(this), decay_time);
 	}
 		
 	/*
@@ -60,6 +71,21 @@ public class Note implements Comparable<Note> {
 	 */
 	public int compareTo(Note n) {
 		return this.id - n.id();
+	}
+	
+	public void destroy() {
+		this.timer.cancel();
+	}
+	
+	class ReleaseTask extends TimerTask {
+		private Note pnote;
+		public ReleaseTask(Note n) {
+			super();
+			this.pnote = n;
+		}
+		public void run() {
+			parent.decay_note(pnote);
+		}
 	}
 	
 }

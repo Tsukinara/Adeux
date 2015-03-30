@@ -48,7 +48,7 @@ public class NoteBuffer {
 	 * Undamps all notes in the note buffer that aren't held at the time it is called.
 	 * Should be called either when the damper is released or the note is released
 	 */
-	public void undamp() {
+	public synchronized void undamp() {
 		ArrayList<Note> tmp = new ArrayList<Note>();
 		for (Note n : note_buffer) {
 			if (!hold_buffer.contains(n)) tmp.add(n);
@@ -62,6 +62,7 @@ public class NoteBuffer {
 	 */
 	public void decay_note(Note n) {
 		note_buffer.remove(n);
+		n.destroy();
 		n = null;
 	}
 	
@@ -76,7 +77,7 @@ public class NoteBuffer {
 	/*
 	 *  Debug methods below, for printing information about buffers
 	 */
-	public void print_holds() {
+	public synchronized void print_holds() {
 		System.out.print("CURRENTLY HELD: ");
 		for (Note n : hold_buffer) {
 			System.out.print(Music.getNoteName(n) + ", ");
@@ -84,7 +85,7 @@ public class NoteBuffer {
 		System.out.println();
 	}
 	
-	public void print_buffer() {
+	public synchronized void print_buffer() {
 		System.out.print("CURRENTLY IN BUFFER: ");
 		for (Note n : note_buffer) {
 			System.out.print(Music.getNoteName(n) + ", ");
