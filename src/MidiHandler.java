@@ -80,7 +80,7 @@ public class MidiHandler {
 			
 			// break down the raw byte data into the three components
 			byte data1 = message[1], data2 = message[2];
-			if (debug) System.out.println("STAT: " + message[0] + "\tDATA1: " + data1 + "\tDATA2: " + data2);
+			if (debug) System.out.println("STAT: " + message[0] + "\tDATA1: " + data1 + "\tDATA2: " + data2 + "\tTIME:" + timeStamp);
 			
 			boolean print = false;
 			// contact note buffer with instructions based on what data is received
@@ -89,15 +89,16 @@ public class MidiHandler {
 				// damp or undamp pedal when pedal status is changed
 				case -80: 
 					damped = ((int)data2 == 127);
-					if (!damped) buffer.undamp();
+					if (!damped) buffer.undamp(timeStamp);
+					else buffer.damp();
 					print = true; break;
 				// add note to buffer when new note is input
 				case -112:
-					buffer.add_note(data1, true, data2);
+					buffer.add_note(data1, true, data2, timeStamp);
 					print = true; break;
 				// release note from buffer when note is released
 				case -128:
-					buffer.release_note(data1, damped);
+					buffer.release_note(data1, damped, timeStamp);
 					print = true; break;
 				default:
 			}
@@ -106,6 +107,7 @@ public class MidiHandler {
 			if (print) {
 				buffer.print_buffer();
 				buffer.print_holds();
+				System.out.println("Current overtone: " + Music.getNoteName(buffer.dom()));
 				System.out.println();
 			}
 		}

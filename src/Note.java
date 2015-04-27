@@ -5,7 +5,8 @@ public class Note implements Comparable<Note> {
 	
 	// time in milliseconds for an A0 to decay * frequency of A0
 	// right now is set to 5 seconds
-	private static final long decay_factor = (long)(int)(1000 * 10 * 16.352);
+	private static final long decay_factor = (long)(int)(1000 * 3 * 16.352);
+	private static final long damp_decay = (long)(int)(1000 * 10 * 16.352);
 	
 	// value is the index of the note in a regular 88 key piano, where 1 is A0
 	// key represents what the note is, where 0 is A, 1 is A#, etc. 
@@ -19,12 +20,15 @@ public class Note implements Comparable<Note> {
 	private boolean damped;
 	private Timer timer;
 	
+	// variables for calculating decay
+	private long startTime;
+	private long endTime;
 	
 	/*
 	 * Generates a new note object, given the MIDI byte which was received and a
 	 * boolean representing whether or not the pedal is down when the note was entered
 	 */
-	public Note(byte id, int vel, boolean damped, NoteBuffer parent) {
+	public Note(byte id, int vel, boolean damped, long time, NoteBuffer parent) {
 		this.parent = parent;
 		this.id = id;
 		this.velocity = vel;
@@ -33,6 +37,17 @@ public class Note implements Comparable<Note> {
 		this.key = (value - 1)%12;
 		this.octave = (value + 8)/12;
 		this.frequency = get_frequency(value);
+		this.startTime = time;
+	}
+	
+	public Note(Note n) {
+		this.parent = n.parent;
+		this.id = n.id;
+		this.velocity = n.velocity;
+		this.value = n.value;
+		this.key = n.key;
+		this.octave = n.octave;
+		this.frequency = n.frequency;
 	}
 	
 	/*
@@ -43,15 +58,46 @@ public class Note implements Comparable<Note> {
 		return 55 * Math.pow(2.0, ((double)value - 13.0)/12);
 	}
 	
+	public void release(long time, boolean damped) {
+		this.damped = damped;
+		this.endTime = time;
+		long held = (this.endTime - this.startTime)/1000;
+		long decay_time = (long)(int)(1.0/this.frequency * damp_decay);
+		long remain_time = decay_time - held;
+		if (remain_time < 0) {
+			if (damped) { parent.mark_note(this); }
+			else { parent.decay_note(this); }
+			return;
+		}	
+		
+		if (this.timer == null) { this.timer = new Timer(); }
+		if (damped) {
+			this.timer.schedule(new ReleaseTask(this), remain_time);
+		} else {
+			this.timer.schedule(new ReleaseTask(this), remain_time * (decay_factor / damp_decay));
+		}
+	}
+	
 	/*
 	 * Undamps the note, starting the timer for its decay. There is no damp method, since
-	 * you cannot damp a note once it has been played. 
+	 * you cannot damp a note once it has been played. Should only be called if the note
+	 * has already been released.
 	 */
-	public void undamp() {
-		this.damped = false;
-		this.timer = new Timer();
-		long decay_time = (long)(int)(1.0/this.frequency * decay_factor);
-		this.timer.schedule(new ReleaseTask(this), decay_time);
+	public void undamp(long time) {
+		if (damped) {
+			this.damped = false;
+			long held = (time - this.startTime) / 1000;
+			long decay_time = (long)(int)(1.0/this.frequency * decay_factor);
+			long remain_time = decay_time - held;
+			if (remain_time < 0) {
+				parent.decay_note(this);
+				return;
+			}	
+						
+			if (this.timer != null) { this.timer.cancel(); }
+			this.timer = new Timer();
+			this.timer.schedule(new ReleaseTask(this), remain_time * (decay_factor / damp_decay));
+		}
 	}
 		
 	/*
@@ -61,6 +107,8 @@ public class Note implements Comparable<Note> {
 	public int key() { return this.key; }
 	public int vel() { return this.velocity; }
 	public int octave() { return this.octave; }
+	public long get_end() { return this.endTime; }
+	public long get_start() { return this.startTime; }
 	public double freq() { return this.frequency; }
 	public boolean is_damped() { return this.damped; }
 	public NoteBuffer get_parent() { return this.parent; }
@@ -74,7 +122,9 @@ public class Note implements Comparable<Note> {
 	}
 	
 	public void destroy() {
-		this.timer.cancel();
+		if (this.timer != null) {
+			this.timer.cancel();
+		}
 	}
 	
 	class ReleaseTask extends TimerTask {
@@ -84,7 +134,8 @@ public class Note implements Comparable<Note> {
 			this.pnote = n;
 		}
 		public void run() {
-			parent.decay_note(pnote);
+			if (damped) { parent.mark_note(pnote); }
+			else { parent.decay_note(pnote); }
 		}
 	}
 	
