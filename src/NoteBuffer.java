@@ -2,13 +2,13 @@ import java.util.ArrayList;
 
 public class NoteBuffer {
 	// contains any notes whose frequencies are dominant
-	private ArrayList<Note> note_buffer;
+	public ArrayList<Note> note_buffer;
 	
 	// contains the notes that are held at the time
-	private ArrayList<Note> hold_buffer;
+	public ArrayList<Note> hold_buffer;
 	
 	// contains any notes that are relevant
-	private ArrayList<Note> rel_buffer;
+	public ArrayList<Note> rel_buffer;
 	
 	//contains all notes within 1.5 octaves of the dominant overtone
 	private ArrayList<Note> bass;

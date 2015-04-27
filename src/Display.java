@@ -51,7 +51,7 @@ public class Display extends JFrame implements Runnable {
 
 	public Display(NoteBuffer buffer) {
 		super(DEFAULT_TITLE);
-		this.state = State.MENU;
+		this.state = State.LOADING;
 		this.buffer = buffer;
 		this.sfxplayer = null;
 		this.mscplayer = null;
@@ -68,7 +68,7 @@ public class Display extends JFrame implements Runnable {
 		Cursor blankCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImg, new Point(0, 0), "Invisimouse"); 
 		setCursor(blankCursor);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		getContentPane().setBackground(bg_color);
+		getContentPane().setBackground(Color.BLACK);
 
 		this.curr = new Thread(this);
 		this.curr.start();
@@ -130,7 +130,8 @@ public class Display extends JFrame implements Runnable {
 	}
 
 	public int scaleX (int x_old) { return (int) ((double)x_old / 1920.0 * (double)this.draw_width); }	
-	public int scaleY (int y_old) { return ((int) ((double)y_old / 1920.0 * (double)this.draw_width)) + offset; }
+	public int scaleH (int h_old) { return (int) ((double)h_old / 1080.0 * (double)this.draw_height); }
+	public int scaleY (int y_old) { return ((int) ((double)y_old / 1080.0 * (double)this.draw_height)) + offset; }
 
 	public int[] scaleX (int[] x_old) {
 		int[] x_new = new int[x_old.length];
@@ -146,6 +147,14 @@ public class Display extends JFrame implements Runnable {
 			y_new[i] = scaleY(y_old[i]);
 		}
 		return y_new;
+	}
+	
+	public int[] scaleH (int[] h_old) {
+		int[] h_new = new int[h_old.length];
+		for(int i = 0; i < h_old.length; i++) {
+			h_new[i] = scaleH(h_old[i]);
+		}
+		return h_new;
 	}
 
 	public void paint(Graphics g) {

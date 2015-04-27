@@ -59,7 +59,7 @@ public class LoadingScreen {
 		this.staff_xc = 194; this.bar_yc = 450;
 		this.img_xc = 194; this.img_yc = 450;
 		this.rtheta = (float)(Math.PI);
-		this.pl_base = new Font("Plantin MT Std", Font.ITALIC, sY(44));
+		this.pl_base = new Font("Plantin MT Std", Font.ITALIC, sH(44));
 		this.anim_done = false; this.bgm_flag = false;
 		this.btheta = (float)(Math.PI);
 	}
@@ -91,15 +91,15 @@ public class LoadingScreen {
 	
 	private void draw_primary (Graphics2D g) {
 		g.setColor(parent.bg_color);
-		g.drawImage(parent.get_images().get("LOAD_BG"), 0, 0, sX(1920), sY(1080), null);
-		g.drawImage(parent.get_images().get("LOGO_BK"), sX(571), sY(200), sX(777), sY(258), null);
-		g.fillRect(0, 0, sX(1920), sY(this.bar_height));
-		g.fillRect(0, sY(980), sX(1920), sY(this.bar_height));
+		g.drawImage(parent.get_images().get("LOAD_BG"), sX(0), sY(0), sX(1920), sH(1080), null);
+		g.drawImage(parent.get_images().get("LOGO_BK"), sX(571), sY(200), sX(777), sH(258), null);
+		g.fillRect(sX(0), sY(0), sX(1920), sH(this.bar_height));
+		g.fillRect(sX(0), sY(980), sX(1920), sH(this.bar_height));
 	}
 	
 	private void transition_in (Graphics2D g) {
 		g.setColor(new Color(0, 0, 0, alpha));
-		g.fillRect(0, 0, sX(1920), sY(1080));
+		g.fillRect(sX(0), sY(0), sX(1920), sH(1080));
 	}
 	
 	private void load_anim (Graphics2D g) {
@@ -126,15 +126,15 @@ public class LoadingScreen {
 			if (imgx[i] < img_xc && imgy[i] < img_yc) {
 				img_da[i] = diA;
 				g.setComposite(AlphaComposite.SrcOver.derive(img_alpha[i]));
-				g.drawImage(images.get(imgs[i]), sX(imgx[i]), sY(imgy[i]), sX(imgw[i]), sY(imgh[i]), null);
+				g.drawImage(images.get(imgs[i]), sX(imgx[i]), sY(imgy[i]), sX(imgw[i]), sH(imgh[i]), null);
 			}
 		}
 		for (int i = 0; i < txts.length; i++) {
 			if (txtx[i] < img_xc && txty[i] < img_yc) {
 				txt_da[i] = -dA/2;
 				switch (i) {
-					case 0: g.setFont(new Font("Tangerine", Font.BOLD, sY(48))); break;
-					case 1: case 2: g.setFont(new Font("Tangerine", Font.PLAIN, sY(60))); break;
+					case 0: g.setFont(new Font("Tangerine", Font.BOLD, sH(48))); break;
+					case 1: case 2: g.setFont(new Font("Tangerine", Font.PLAIN, sH(60))); break;
 				}
 				g.setComposite(AlphaComposite.SrcOver.derive((float)txt_alpha[i]/255f));
 				g.drawString(txts[i], sX(txtx[i]), sY(txty[i]));
@@ -151,7 +151,7 @@ public class LoadingScreen {
 					a = (a/2-100 > 255 ? 255 : a/2-100);
 					if (a > 0) {
 						g.setComposite(AlphaComposite.SrcOver.derive(a/255f));
-						g.fillRect(sX(x), sY(y), sX(20), sY(6));
+						g.fillRect(sX(x), sY(y), sX(20), sH(6));
 					}
 					if (a == 255 && i == 5 && j == 2) anim_done = true;
 				}
@@ -179,7 +179,7 @@ public class LoadingScreen {
 		draw_staff(g);
 		
 		g.setComposite(AlphaComposite.SrcOver.derive((1 + (float)Math.cos(rtheta))/2));
-		g.drawImage(highlight, sX(553), sY(835), sX(804), sY(115), null);
+		g.drawImage(highlight, sX(553), sY(835), sX(804), sH(115), null);
 		
 		g.setComposite(AlphaComposite.SrcOver.derive(1f));
 		g.setColor(parent.bg_color);
@@ -191,9 +191,9 @@ public class LoadingScreen {
 	}
 	
 	private void transition_out (Graphics2D g) {
-		g.drawImage(parent.get_images().get("LOAD_BG"), 0, 0, sX(1920), sY(1080), null);
+		g.drawImage(parent.get_images().get("LOAD_BG"), sX(0), sY(0), sX(1920), sH(1080), null);
 		draw_staff(g);
-		g.drawImage(highlight, sX(553), sY(835), sX(804), sY(115), null);
+		g.drawImage(highlight, sX(553), sY(835), sX(804), sH(115), null);
 		g.setColor(parent.bg_color);
 		g.setFont(pl_base);
 		g.drawString("play any note to start", sX(767), sY(901));
@@ -202,15 +202,15 @@ public class LoadingScreen {
 		int[] x2 = {1247, 1185, 1185}; g.fillPolygon(sX(x2), sY(ys), 3);
 		
 		g.setColor(new Color(255, 255, 255, alpha));
-		g.fillRect(0, 0, sX(1920), sY(1080));
+		g.fillRect(sX(0), sY(0), sX(1920), sH(1080));
 		
-		g.drawImage(parent.get_images().get("LOGO_BK"), sX(571), sY(200), sX(777), sY(258), null);
+		g.drawImage(parent.get_images().get("LOGO_BK"), sX(571), sY(200), sX(777), sH(258), null);
 		
 		g.setColor(parent.bg_color);
-		bar_height = (short)(bar_height - sY(25)*(Math.cos(btheta)+1));
+		bar_height = (short)(bar_height - sH(25)*(Math.cos(btheta)+1));
 		if (bar_height < nb_height) bar_height = nb_height;
-		g.fillRect(0, 0, sX(1920), sY(this.bar_height));
-		g.fillRect(0, sY(1080-bar_height+1), sX(1920), sY(this.bar_height));
+		g.fillRect(sX(0), sY(0), sX(1920), sH(this.bar_height));
+		g.fillRect(sX(0), sY(1080-bar_height+1), sX(1920), sH(this.bar_height));
 	}
 	
 	private void draw_staff (Graphics2D g) {
@@ -225,11 +225,11 @@ public class LoadingScreen {
 			if (i == bar_xs.length - 1) g.setStroke(new BasicStroke(8f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
 			g.drawLine(sX(x), sY(bar_ys), sX(x), sY(bar_ye));
 		}
-		for (int i = 0; i < imgs.length; i++) g.drawImage(images.get(imgs[i]), sX(imgx[i]), sY(imgy[i]), sX(imgw[i]), sY(imgh[i]), null);
+		for (int i = 0; i < imgs.length; i++) g.drawImage(images.get(imgs[i]), sX(imgx[i]), sY(imgy[i]), sX(imgw[i]), sH(imgh[i]), null);
 		for (int i = 0; i < txts.length; i++) {
 			switch (i) {
-				case 0: g.setFont(new Font("Tangerine", Font.BOLD, sY(48))); break;
-				case 1: case 2: g.setFont(new Font("Tangerine", Font.PLAIN, sY(60))); break;
+				case 0: g.setFont(new Font("Tangerine", Font.BOLD, sH(48))); break;
+				case 1: case 2: g.setFont(new Font("Tangerine", Font.PLAIN, sH(60))); break;
 			}
 			g.drawString(txts[i], sX(txtx[i]), sY(txty[i]));
 		}
@@ -239,7 +239,7 @@ public class LoadingScreen {
 			for (int j = 0; j < 3; j++) {
 				int x = 232*i + 534;
 				int y = (j == 0 ? 537 : (j == 1 ? 652 : 741));
-				g.fillRect(sX(x), sY(y), sX(20), sY(6));
+				g.fillRect(sX(x), sY(y), sX(20), sH(6));
 			}
 		}
 	}
@@ -297,6 +297,7 @@ public class LoadingScreen {
 	
 	private int sX (int x) { return parent.scaleX(x); }
 	private int sY (int y) { return parent.scaleY(y); }
+	private int sH (int h) { return parent.scaleH(h); }
 	private int[] sX (int[] x) { return parent.scaleX(x); }
 	private int[] sY (int[] y) { return parent.scaleY(y); }
 	
