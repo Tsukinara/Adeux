@@ -28,4 +28,8 @@ public class TimeSignature {
 				this.type = Type.UNKNOWN;
 		}
 	}
+	
+	public String toString() {
+		return hi + " / " + lo;
+	}
 }
