@@ -1,5 +1,7 @@
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -46,7 +48,24 @@ public class Settings {
 	}
 	
 	public void write_settings(String filename) {
-		
+		File settings = new File(filename);
+		settings.delete();
+		settings = new File(filename);
+		try {
+            BufferedWriter output = new BufferedWriter(new FileWriter(settings));
+            output.write("tsig\t" + (tsig != null ? tsig.hi + "/" + tsig.lo + "\n" : "null\n"));
+            output.write("skey\t" + (ksig != null ? ksig.get_base() + "" + ksig.get_type() + "\n" : "null\n"));
+            output.write("styp\t" + (ksig != null ? (ksig.major ? "maj\n" : "min\n") : "maj\n"));
+            output.write("tmpo\t" + tempo + "\n");
+            output.write("harm\t" + harmonize + "\n");
+            output.write("type\t" + (chord_type == ChordType.ROMAN ? "roman" : "symbol") + "\n");
+            output.write("bgmv\t" + bgm_vol + "\n");
+            output.write("hrmv\t" + harm_vol + "\n");
+            output.write("disp\t" + window_size + "\n");
+            output.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 	}
 
 	private void parse_settings(ArrayList<String> settings) {
@@ -72,6 +91,13 @@ public class Settings {
 				if (key.equals("hrmv")) this.harm_vol = (short)Integer.parseInt(val);
 				if (key.equals("tmpo")) this.tempo = Integer.parseInt(val);
 			}
+		if (harm_vol <= 0) { harm_vol = 0; harmonize = false; }
+		if (harm_vol > 0) { harmonize = true; }
+		if (harm_vol > 100) harm_vol = 100;
+		if (bgm_vol < 0) bgm_vol = 0;
+		if (bgm_vol > 100) bgm_vol = 100;
+		if (tempo < 40 && tempo != -1) tempo = 40;
+		
 		if (skey.equals("null")) this.ksig = null;
 		else this.ksig = new KeySignature(skey, smaj);
 		} catch (Exception e) {
@@ -93,11 +119,5 @@ public class Settings {
 		s += "BGM Vol:\t" + bgm_vol + "%\n";
 		s += "Accomp Vol:\t" + harm_vol + "%\n";
 		return s;
-	}
-	
-	public static void main(String[] args) {
-		File f = new File("profile\\settings.dat");
-		Settings s = new Settings(f);
-		System.out.println(s.toString());
 	}
 }
