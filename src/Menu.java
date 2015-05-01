@@ -8,18 +8,18 @@ import java.awt.BasicStroke;
 public class Menu {
 	private final short dA = 5, dL = 10;
 	private final float dT = 0.1f, doA = 0.05f;
-	private final int num_snowflakes = 100;
+	private final int num_snowflakes = 200;
 	private final short max_opt = 2;
 	private final int origX = 960, origY = 701;
 	private final int finXL = 760, finYB = 849;
 	private final int box_y = 571, box_w = 404, box_h = 253;
 	private final int sel_h = 70;
+
 	private final String[] opts = {"start", "settings", "exit"};
 	private final int[] opt_y = {641, 714, 787};
 	
 	private Display parent; private Display.State next_state;
 	private Font pl_base;
-	private Snow[] snow;
 	private short curr_state, curr_opt, bar_height, alpha, alpha2, delay;
 	private int bar_xc, bar_yc, txt_yc, sel_y;
 	private float theta, theta2;
@@ -39,12 +39,12 @@ public class Menu {
 		this.alpha = 255; this.alpha2 = 0;
 		this.delay = 500 / 20;
 		this.sel_y = get_opt_y();
-		this.snow = new Snow[num_snowflakes];
+		parent.snow = new Snow[num_snowflakes];
 		for (int i = 0; i < num_snowflakes; i++)
-			snow[i] = new Snow(
+			parent.snow[i] = new Snow(
 					Math.random()*sX(1920), Math.random()*sY(1080), 
-					Math.random()*sX(5)+1, Math.random()*sH(5)+sH(3), 
-					Math.random()*sX(8)+sX(4), parent);
+					Math.random()*sW(8)+1, Math.random()*sH(6)+sH(4), 
+					Math.random()*sW(8)+sW(5));
 		this.theta = (float)Math.PI; this.theta2 = (float)Math.PI;
 		this.bar_xc = origX; this.bar_yc = origY; this.txt_yc = 590;
 		this.pl_base = new Font("Plantin MT Std", Font.PLAIN, sH(48));
@@ -56,30 +56,33 @@ public class Menu {
 		switch (curr_state) {
 			case 0: transition_in(g); break;
 			case 1: opt_select(g); break;
-			case 2:
+			case 2: transition_profile(g); break;
+			case 3: profile_select(g); break;
+			case 4: transition_out(g); break;
+			case 5: transition_settings(g); break;
 		}
 	}
 		
 	private void draw_primary(Graphics2D g) {
-		g.drawImage(parent.get_images().get("MENU_BG"), sX(0), sY(0), sX(1920), sH(1080), null);
+		g.drawImage(parent.get_images().get("MENU_BG"), sX(0), sY(0), sW(1920), sH(1080), null);
 		g.setColor(Color.WHITE);
-		for (Snow s : snow) g.fillOval(sX(s.x), sY(s.y), sX(s.dia), sH(s.dia));
+		for (Snow s : parent.snow) g.fillOval(sX(s.x), sY(s.y), sW(s.dia), sH(s.dia));
 		
 		g.setColor(parent.bg_color);
-		g.drawImage(parent.get_images().get("LOGO_BK"), sX(571), sY(200), sX(777), sH(258), null);
-		g.fillRect(sX(0), sY(0), sX(1920), sH(this.bar_height));
-		g.fillRect(sX(0), sY(1080-bar_height+1), sX(1920), sH(bar_height));	
+		g.drawImage(parent.get_images().get("LOGO_BK"), sX(571), sY(200), sW(777), sH(258), null);
+		g.fillRect(sX(0), sY(0), sW(1920), sH(this.bar_height));
+		g.fillRect(sX(0), sY(1080-bar_height+1), sW(1920), sH(bar_height));	
 	}
 	
 	private void transition_in(Graphics2D g) {
 		g.setColor(new Color(255, 255, 255, alpha));
-		g.fillRect(sX(0), sY(0), sX(1920), sH(1080));
+		g.fillRect(sX(0), sY(0), sW(1920), sH(1080));
 		
-		g.drawImage(parent.get_images().get("LOGO_BK"), sX(571), sY(200), sX(777), sH(258), null);
+		g.drawImage(parent.get_images().get("LOGO_BK"), sX(571), sY(200), sW(777), sH(258), null);
 		
 		g.setColor(parent.bg_color);
-		g.fillRect(sX(0), sY(0), sX(1920), sH(this.bar_height));
-		g.fillRect(sX(0), sY(1080-bar_height+1), sX(1920), sH(this.bar_height));
+		g.fillRect(sX(0), sY(0), sW(1920), sH(this.bar_height));
+		g.fillRect(sX(0), sY(1080-bar_height+1), sW(1920), sH(this.bar_height));
 		
 		g.setStroke(new BasicStroke(8, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		if (bar_yc < finYB) bar_yc = origY + 1 + (int)((finYB-origY)/2 * (1+Math.cos(theta)));
@@ -88,14 +91,14 @@ public class Menu {
 		else bar_xc = finXL;
 		if (bar_yc == finYB) {
 			g.setColor(new Color(222, 238, 246, 200));
-			g.fillRect(sX(bar_xc), sY(box_y), sX(2*(origX-bar_xc)), sH(box_h));
+			g.fillRect(sX(bar_xc), sY(box_y), sW(2*(origX-bar_xc)), sH(box_h));
 		}
 		
 		if(txt_yc - sH(830) > 0) {
 			int a = ((txt_yc-sH(830))/2 > 255 ? 255 : (txt_yc - sH(830))/2);
 			g.setColor(new Color(255, 255, 255, a));
 			if (a == 255) flag_load = true;
-			g.fillRect(sX(finXL), sY(sel_y), sX(box_w), sH(sel_h));
+			g.fillRect(sX(finXL), sY(sel_y), sW(box_w), sH(sel_h));
 		}
 		
 		g.setColor(new Color(26, 26, 26, alpha2));
@@ -113,10 +116,10 @@ public class Menu {
 	
 	private void opt_select(Graphics2D g) {
 		g.setColor(new Color(222, 238, 246, 200));
-		g.fillRect(sX(finXL), sY(box_y), sX(box_w), sH(box_h));
+		g.fillRect(sX(finXL), sY(box_y), sW(box_w), sH(box_h));
 		
 		g.setColor(Color.WHITE);
-		g.fillRect(sX(finXL), sY(sel_y), sX(box_w), sH(sel_h));
+		g.fillRect(sX(finXL), sY(sel_y), sW(box_w), sH(sel_h));
 		
 		g.setColor(parent.bg_color);
 		g.setStroke(new BasicStroke(8, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
@@ -132,11 +135,26 @@ public class Menu {
 		}
 	}
 	
+	private void transition_profile(Graphics2D g) {
+		
+	}
+	
+	private void profile_select(Graphics2D g) {
+		
+	}
+	
+	private void transition_out(Graphics2D g) {
+		
+	}
+	
+	private void transition_settings(Graphics2D g) {
+		
+	}
+	
 	private int get_opt_y() { return 71*curr_opt + 593; }
 	
 	public void handle(KeyEvent e) {
 		switch (e.getKeyCode()) {
-			case KeyEvent.VK_ESCAPE: System.exit(0); break;
 			case KeyEvent.VK_R: init_values(); break;
 			case KeyEvent.VK_UP: case KeyEvent.VK_LEFT:
 				if (curr_state < 2) curr_opt = (short)(curr_opt - 1 < 0 ? 0 : curr_opt - 1);
@@ -147,16 +165,19 @@ public class Menu {
 			case KeyEvent.VK_ENTER: case KeyEvent.VK_Z:
 				if (curr_state < 2) {
 					switch (curr_opt) {
-						case 0: curr_state++; break;
-						case 1: next_state = Display.State.SETTINGS; curr_state = 4; break;
+						case 0: curr_state = 3; break;
+						case 1: next_state = Display.State.SETTINGS; curr_state = 5; break;
 						case 2: System.exit(0);
 					}
 				}
+			case KeyEvent.VK_X: case KeyEvent.VK_ESCAPE:
+				if (curr_state < 2) curr_opt = 2;
+				break;
 		}
 	}
 	
 	public void step() {
-		for (Snow s : snow) s.step();
+		for (Snow s : parent.snow) s.step();
 		switch (curr_state) {
 		case 0: // transition in
 			if (delay <= 0) alpha = (short)(alpha-dA < 0 ? 0 : alpha-dA);
@@ -190,12 +211,14 @@ public class Menu {
 			}
 		case 2: // transition to profile select
 		case 3: // profile select
-		case 4: // transition out	
+		case 4: // transition settings
+		case 5: // transition main
 		}
 	}
 	
 	private int sX (int x) { return parent.scaleX(x); }
 	private int sY (int y) { return parent.scaleY(y); }
+	private int sW (int w) { return parent.scaleW(w); }
 	private int sH (int h) { return parent.scaleH(h); }
 //	private int[] sX (int[] x) { return parent.scaleX(x); }
 //	private int[] sY (int[] y) { return parent.scaleY(y); }

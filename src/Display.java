@@ -1,5 +1,6 @@
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontFormatException;
 import java.awt.Graphics;
@@ -24,22 +25,25 @@ import javax.swing.JFrame;
 public class Display extends JFrame implements Runnable {
 
 	private static final long serialVersionUID = 4767630629171590730L;
-	private static final String DEFAULT_TITLE = "Project Adeux";
+	private static final String DEFAULT_TITLE = "Project \u00c1deux";
 	private static final int s_width = Toolkit.getDefaultToolkit().getScreenSize().width;
 	private static final int s_height = Toolkit.getDefaultToolkit().getScreenSize().height;
 	public static final String font_path = "resources\\fonts\\";
 	public static final String img_path = "resources\\images\\";
 	public static final String musc_path = "resources\\music\\";
 	public final Color bg_color = new Color(26, 26, 26, 255);
-
-	private int draw_width, draw_height, offset;
-
+	
+	public int width, height;
+	private int draw_width, draw_height, offset_y, offset_x;
+	private boolean windowed;
+	
 	private HashMap<String, BufferedImage> images;
 	private MPlayer sfxplayer, mscplayer;
 	private LoadingScreen s_ls;
 	private Menu s_mn;
 	private AppCore s_ac;
 	private SettingsMenu s_sm;
+	protected Snow[] snow;
 
 	private Thread curr;
 	private NoteBuffer buffer;
@@ -53,10 +57,16 @@ public class Display extends JFrame implements Runnable {
 		super(DEFAULT_TITLE);
 		this.state = State.LOADING;
 		this.buffer = buffer;
-		this.sfxplayer = null;
-		this.mscplayer = null;
-		setLocation(0, 0); setUndecorated(true);
-		setSize(s_width, s_height);
+		this.sfxplayer = null; this.mscplayer = null;
+		this.width = s_width; this.height = s_height;
+		
+		windowed = true; width = 1366; height = 768;
+		
+		setUndecorated(!windowed);
+		setSize(width, height);	
+
+		setLocationRelativeTo(null);
+		setResizable(false);
 		initialize_basics();
 
 		s_ls = new LoadingScreen(this);
@@ -64,6 +74,7 @@ public class Display extends JFrame implements Runnable {
 		s_ac = new AppCore();
 		s_sm = new SettingsMenu();
 
+		setIconImage(images.get("FR_ICON"));
 		BufferedImage cursorImg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
 		Cursor blankCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImg, new Point(0, 0), "Invisimouse"); 
 		setCursor(blankCursor);
@@ -91,18 +102,31 @@ public class Display extends JFrame implements Runnable {
 		addFocusListener(new FocusListener() {
 			public void focusGained(FocusEvent e) {}
 			public void focusLost(FocusEvent e) {
-				System.exit(0);
+				//System.exit(0);
 			}
 
 		});
 	}
+	
+	private void calculate_offsets() {
+		this.draw_width = width;
+		this.draw_height = width*9/16;
+		this.offset_y = (height - draw_height) / 2; this.offset_x = 0;
+		if (windowed) {
+			this.offset_x += (getWidth() - getContentPane().getWidth())/2;
+			this.offset_y += (getHeight() - getContentPane().getHeight()) - offset_x;
+		}
+	}
+	
+	private void begin() {
+		setVisible(true); 
+		getContentPane().setPreferredSize(new Dimension(width, height)); pack();
+		calculate_offsets();
+	}
 
 	private void initialize_basics() {
-		this.draw_width = s_width;
-		this.draw_height = s_width*9/16;
-		this.offset = (s_height - draw_height) / 2;
+		calculate_offsets();
 		this.images = new HashMap<String, BufferedImage>();
-
 		try {
 			GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 			ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, new File(font_path + "PlantinMTStd-Bold.otf")));
@@ -115,6 +139,7 @@ public class Display extends JFrame implements Runnable {
 			images.put("LOAD_BG", ImageIO.read(new File(img_path + "load_bg.png")));
 			images.put("LOGO_BK", ImageIO.read(new File(img_path + "logo_bk.png")));
 			images.put("LOGO_WH", ImageIO.read(new File(img_path + "logo_wh.png")));
+			images.put("FR_ICON", ImageIO.read(new File("resources\\icons\\icon.png")));
 
 		} catch (IOException|FontFormatException e) {
 			e.printStackTrace();
@@ -129,10 +154,11 @@ public class Display extends JFrame implements Runnable {
 		}
 	}
 
-	public int scaleX (int x_old) { return (int) ((double)x_old / 1920.0 * (double)this.draw_width); }	
+	public int scaleX (int x_old) { return ((int) ((double)x_old / 1920.0 * (double)this.draw_width)) + offset_x; }	
+	public int scaleW (int w_old) { return (int) ((double)w_old / 1920.0 * (double)this.draw_width); }
+	public int scaleY (int y_old) { return ((int) ((double)y_old / 1080.0 * (double)this.draw_height)) + offset_y; }
 	public int scaleH (int h_old) { return (int) ((double)h_old / 1080.0 * (double)this.draw_height); }
-	public int scaleY (int y_old) { return ((int) ((double)y_old / 1080.0 * (double)this.draw_height)) + offset; }
-
+	
 	public int[] scaleX (int[] x_old) {
 		int[] x_new = new int[x_old.length];
 		for(int i = 0; i < x_old.length; i++) {
@@ -217,6 +243,7 @@ public class Display extends JFrame implements Runnable {
 		}
 	}
 	public static void main(String [] args) {
-		new Display(null).setVisible(true);
+		Display d = new Display(null);
+		d.begin();
 	}
 }

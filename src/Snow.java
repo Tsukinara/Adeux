@@ -1,16 +1,15 @@
 public class Snow {
 	public int x, y, dx, dy, dia;
-	private Display parent;
 	
-	public Snow(double x, double y, double dx, double dy, double dia, Display parent) {
+	public Snow(double x, double y, double dx, double dy, double dia) {
 		this.x = (int)x; this.y = (int)y; 
 		this.dx = (int)dx; this.dy = (int)dy;
-		this.dia = (int)dia; this.parent = parent;
+		this.dia = (int)dia;
 	}
 	
 	public void step() {
 		x += dx; y += dy;
-		if (x > parent.getWidth()) x = 0;
-		if (y > parent.getHeight()) y = 0;
+		if (x > 1920) x = x-1920;
+		if (y > 1080) y = y-1080;
 	}
 }
