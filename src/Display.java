@@ -31,6 +31,7 @@ public class Display extends JFrame implements Runnable {
 	public static final String font_path = "resources\\fonts\\";
 	public static final String img_path = "resources\\images\\";
 	public static final String musc_path = "resources\\music\\";
+	public static final String settings = "profile\\settings.dat";
 	public final Color bg_color = new Color(26, 26, 26, 255);
 	
 	public int width, height;
@@ -41,8 +42,10 @@ public class Display extends JFrame implements Runnable {
 	private MPlayer sfxplayer, mscplayer;
 	private LoadingScreen s_ls;
 	private Menu s_mn;
+	private ProfileSelect s_ps;
 	private AppCore s_ac;
 	private SettingsMenu s_sm;
+	protected Settings set;
 	protected Snow[] snow;
 
 	private Thread curr;
@@ -55,12 +58,17 @@ public class Display extends JFrame implements Runnable {
 
 	public Display(NoteBuffer buffer) {
 		super(DEFAULT_TITLE);
-		this.state = State.LOADING;
+		this.state = State.MENU;
 		this.buffer = buffer;
 		this.sfxplayer = null; this.mscplayer = null;
 		this.width = s_width; this.height = s_height;
+		this.set = new Settings(new File(this.settings));
 		
-		windowed = true; width = 1366; height = 768;
+		if (set.window_size == -1) {
+			windowed = false; width = s_width; height = s_height;
+		} else { 
+			windowed = true; width = set.window_size; height = set.window_size*9/16;
+		}
 		
 		setUndecorated(!windowed);
 		setSize(width, height);	
@@ -72,7 +80,8 @@ public class Display extends JFrame implements Runnable {
 		s_ls = new LoadingScreen(this);
 		s_mn = new Menu(this);
 		s_ac = new AppCore();
-		s_sm = new SettingsMenu();
+		s_sm = new SettingsMenu(this);
+		s_ps = new ProfileSelect(this);
 
 		setIconImage(images.get("FR_ICON"));
 		BufferedImage cursorImg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
@@ -135,6 +144,7 @@ public class Display extends JFrame implements Runnable {
 			ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, new File(font_path + "PlantinMTStd-Regular.otf")));
 			ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, new File(font_path + "Tangerine_Bold.ttf")));
 			ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, new File(font_path + "Tangerine_Regular.ttf")));
+			ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, new File(font_path + "OpusTextStd.otf")));
 
 			images.put("LOAD_BG", ImageIO.read(new File(img_path + "load_bg.png")));
 			images.put("LOGO_BK", ImageIO.read(new File(img_path + "logo_bk.png")));

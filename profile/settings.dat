@@ -1,9 +1,9 @@
-tsig	4/4
-skey	c
-styp	min
-tmpo	-1
+tsig	null
+skey	C
+styp	maj
+tmpo	185
 harm	false
 type	symbol
-bgmv	50
-hrmv	50
-disp	1920
+bgmv	70
+hrmv	75
+disp	-1
