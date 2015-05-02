@@ -10,6 +10,8 @@ import java.awt.Image;
 import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
@@ -17,6 +19,7 @@ import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import javax.imageio.ImageIO;
@@ -31,7 +34,8 @@ public class Display extends JFrame implements Runnable {
 	public static final String font_path = "resources\\fonts\\";
 	public static final String img_path = "resources\\images\\";
 	public static final String musc_path = "resources\\music\\";
-	public static final String settings = "profile\\settings.dat";
+	public static final String prof_path = "profile\\";
+	public static final String settings = prof_path + "settings.dat";
 	public final Color bg_color = new Color(26, 26, 26, 255);
 	
 	public int width, height;
@@ -40,29 +44,31 @@ public class Display extends JFrame implements Runnable {
 	
 	private HashMap<String, BufferedImage> images;
 	private MPlayer sfxplayer, mscplayer;
-	private LoadingScreen s_ls;
-	private Menu s_mn;
-	private ProfileSelect s_ps;
-	private AppCore s_ac;
-	private SettingsMenu s_sm;
+	protected LoadingScreen s_ls;
+	protected Menu s_mn;
+	protected ProfileSelect s_ps;
+	protected AppCore s_ac;
+	protected SettingsMenu s_sm;
 	protected Settings set;
 	protected Snow[] snow;
-
-	private Thread curr;
+	protected ArrayList<String> profiles;
+	
+	private Profile prof;
 	private NoteBuffer buffer;
+	private Thread curr;
 	public State state;
+	
 
 	public enum State {
-		LOADING, MENU, MAIN, SETTINGS
+		LOADING, MENU, MAIN, SETTINGS, PROFILE
 	}
 
-	public Display(NoteBuffer buffer) {
+	public Display() {
 		super(DEFAULT_TITLE);
 		this.state = State.MENU;
-		this.buffer = buffer;
 		this.sfxplayer = null; this.mscplayer = null;
 		this.width = s_width; this.height = s_height;
-		this.set = new Settings(new File(this.settings));
+		this.set = new Settings(new File(settings));
 		
 		if (set.window_size == -1) {
 			windowed = false; width = s_width; height = s_height;
@@ -100,20 +106,20 @@ public class Display extends JFrame implements Runnable {
 				case MENU: s_mn.handle(e); break;
 				case MAIN: s_ac.handle(e); break;
 				case SETTINGS: s_sm.handle(e); break;
+				case PROFILE: s_ps.handle(e); break;
 				}
 			}
 
 			public void keyReleased(KeyEvent e) {}
 			public void keyTyped(KeyEvent e) {}
 		});
-
+		
 		//TODO: REMOVE THIS
 		addFocusListener(new FocusListener() {
 			public void focusGained(FocusEvent e) {}
 			public void focusLost(FocusEvent e) {
 				//System.exit(0);
 			}
-
 		});
 	}
 	
@@ -127,10 +133,28 @@ public class Display extends JFrame implements Runnable {
 		}
 	}
 	
-	private void begin() {
+	public void begin() {
 		setVisible(true); 
 		getContentPane().setPreferredSize(new Dimension(width, height)); pack();
 		calculate_offsets();
+	}
+	
+	public void note_pressed(byte id, byte vel, long timestamp) {
+		switch (state) {
+			case LOADING: s_ls.note_pressed(id, vel, timestamp); 
+		}
+	}
+	
+	public void note_released(byte id, long timestamp) {
+		
+	}
+	
+	public void damp_pressed(long timestamp) {
+		
+	}
+	
+	public void damp_released(long timestamp) {
+		
 	}
 
 	private void initialize_basics() {
@@ -157,12 +181,29 @@ public class Display extends JFrame implements Runnable {
 	}
 
 	public void load_all_resources() {
+		prof = new Profile();
+		File dir = new File("profile");
+		profiles = new ArrayList<String>();
+		File[] list = dir.listFiles();
+		for (int i = 0; i < list.length; i++) {
+			profiles.add(list[i].getName());
+			profiles.set(i, profiles.get(i).substring(0, profiles.get(i).length()-4));
+		}
+		profiles.remove("settings");
 		try {
 			images.put("MENU_BG", ImageIO.read(new File(img_path + "menu_bg.png")));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
+	
+	public void set_profile(String profilename) {
+		System.err.println("Setting profile to: " + profilename);
+		if (profilename.equals("")) prof = new Profile();
+		else prof = new Profile(prof_path + "" + profilename + ".dat");
+	}
+	
+	public Profile profile() { return prof; }
 
 	public int scaleX (int x_old) { return ((int) ((double)x_old / 1920.0 * (double)this.draw_width)) + offset_x; }	
 	public int scaleW (int w_old) { return (int) ((double)w_old / 1920.0 * (double)this.draw_width); }
@@ -205,6 +246,9 @@ public class Display extends JFrame implements Runnable {
 		sfxplayer.play();
 	}
 	
+	public NoteBuffer buffer() { return this.buffer; }
+	public void set_buffer(NoteBuffer buffer) { this.buffer = buffer; }
+	
 	public void play_bgm(String filename) {
 		if (mscplayer != null) mscplayer.close();
 		mscplayer = new MPlayer(musc_path + filename);
@@ -230,30 +274,33 @@ public class Display extends JFrame implements Runnable {
 			break;
 		case SETTINGS:
 			s_sm.render(g2d);
+			break;
+		case PROFILE:
+			s_ps.render(g2d);
+			break;
 		}
 	}
+	
+	public void set_state(State s) { 
+		System.err.println("Changing state to: " + s.name()); 
+		System.err.flush();
+		this.state = s; 
+	}
 
-	public void set_state(State s) { this.state = s; }
-
-	public void set_buffer(NoteBuffer b) { this.buffer = b; }
-	public NoteBuffer get_buffer() { return this.buffer; }
 	public HashMap<String, BufferedImage> get_images() { return this.images; }
 
 	public void run() {
 		while (Thread.currentThread() == curr) {
 			repaint();
 			switch (this.state) {
-			case LOADING: s_ls.step(); break;
-			case MENU: s_mn.step(); break;
-			case MAIN: s_ac.step(); break;
-			case SETTINGS: s_sm.step(); break;
+				case LOADING: s_ls.step(); break;
+				case MENU: s_mn.step(); break;
+				case MAIN: s_ac.step(); break;
+				case SETTINGS: s_sm.step(); break;
+				case PROFILE: s_ps.step(); break;
 			}
 			try { Thread.sleep(20); } 
 			catch (Exception e) { e.printStackTrace(); }
 		}
-	}
-	public static void main(String [] args) {
-		Display d = new Display(null);
-		d.begin();
 	}
 }

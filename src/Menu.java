@@ -7,25 +7,26 @@ import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
 
 public class Menu {
-	private final short dA = 5, dL = 10;
-	private final float dT = 0.1f, dT2 = 0.07f, doA = 0.05f;
-	private final int num_snowflakes = 200;
-	private final short max_opt = 2;
-	private final int origX = 960, origY = 701;
-	private final int finXL = 760, finYB = 849, finYT = 553;
-	private final int box_y = 571, box_w = 404, box_h = 253;
-	private final int sel_h = 70;
-	private final int setXL = 440, setYB = 924, setYT = 156;
-	private final int setTT = 213;
+	private static final short dA = 5, dL = 10;
+	private static final float dT = 0.1f, dT2 = 0.07f, doA = 0.05f;
+	private static final int num_snowflakes = 200;
+	private static final short max_opt = 2;
+	private static final int origX = 960, origY = 701;
+	private static final int finXL = 760, finYB = 849, finYT = 553;
+	private static final int box_y = 571, box_w = 404, box_h = 253;
+	private static final int sel_h = 70;
+	private static final int setXL = 440, setYB = 944, setYT = 136;
+	private static final int proXL = 694, proYB = 944, proYT = 136;
+	private static final int setTT = 185, proTT = 185;
 
 	private final String[] opts = {"start", "settings", "exit"};
 	private final int[] opt_y = {641, 714, 787};
 	
 	private Display parent; private Display.State next_state;
 	private Font pl_base;
-	private short curr_state, curr_opt, bar_height, alpha, alpha2, delay;
+	private short curr_state, curr_opt, bar_height, alpha, alpha2, alphap, delay;
 	private int bar_xc, bar_yc, bar_yc2, txt_yc, sel_y;
-	private float theta, theta2, theta3;
+	private float theta, theta2, theta_s1, theta_p1;
 	private float[] opt_alpha, opt_da;
 	private boolean flag_load;
 	
@@ -39,7 +40,7 @@ public class Menu {
 		this.curr_opt = 0;
 		this.opt_alpha = new float [max_opt+1]; this.opt_da = new float [max_opt+1];
 		this.bar_height = 50;
-		this.alpha = 255; this.alpha2 = 0;
+		this.alpha = 255; this.alpha2 = 0; this.alphap = 0;
 		this.delay = 500 / 20;
 		this.sel_y = get_opt_y();
 		parent.snow = new Snow[num_snowflakes];
@@ -49,7 +50,7 @@ public class Menu {
 					Math.random()*sW(8)+1, Math.random()*sH(6)+sH(4), 
 					Math.random()*sW(8)+sW(5));
 		this.theta = (float)Math.PI; this.theta2 = (float)Math.PI;
-		this.theta3 = (float)Math.PI;
+		this.theta_s1 = (float)Math.PI; this.theta_p1 = (float)Math.PI;
 		this.bar_xc = origX; this.bar_yc = origY; this.txt_yc = 590;
 		this.bar_yc2 = finYT;
 		this.pl_base = new Font("Plantin MT Std", Font.PLAIN, sH(48));
@@ -62,10 +63,8 @@ public class Menu {
 			case 0: transition_in(g); break;
 			case 1: opt_select(g); break;
 			case 2: transition_profile(g); break;
-			case 3: profile_select(g); break;
+			case 3: transition_out(g); break;
 			case 4: transition_settings(g); break;
-			case 5: transition_out(g); break;
-			case 6: transition_back(g); break;
 		}
 	}
 		
@@ -141,31 +140,64 @@ public class Menu {
 	}
 	
 	private void transition_profile(Graphics2D g) {
-
-	}
-	
-	private void profile_select(Graphics2D g) {
+		g.setComposite(AlphaComposite.SrcOver.derive(1f));
 		
+		if (bar_yc < proYB) bar_yc = finYB + 2 + (int)((proYB-finYB)/2 * (1+Math.cos(theta_p1)));
+		else bar_yc = proYB;
+		if (bar_yc2 > proYT) bar_yc2 = finYT - 2 - (int)((finYT-proYT)/2 * (1+Math.cos(theta_p1)));
+		else bar_yc2 = proYT;
+		if (bar_xc > proXL) bar_xc = finXL - 2 - (int)((finXL-proXL)/2 * (1+Math.cos(theta_p1)));
+		else bar_xc = proXL;
+		if (sel_y > proTT) sel_y = get_opt_y() - 2 - (int)((get_opt_y()-proTT)/2 * (1+Math.cos(theta_p1)));
+		else sel_y = proTT;
+		
+		int menu_h = (bar_yc - bar_yc2) - (finYB - finYT - box_h);
+		int menu_y = bar_yc2 + (bar_yc - bar_yc2 - menu_h)/2;
+		g.setColor(new Color(222, 238, 246, 200));
+		g.fillRect(sX(bar_xc), sY(menu_y), sW(2*(origX-bar_xc)), sH(menu_h));
+		
+		g.setColor(Color.WHITE);
+		g.fillRect(sX(bar_xc), sY(sel_y), sW(2*(origX-bar_xc)), sH(sel_h));
+		
+		g.setColor(parent.bg_color);
+		g.setStroke(new BasicStroke(8, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+		g.drawLine(sX(bar_xc), sY(bar_yc), sX(bar_xc), sY(bar_yc2));
+		g.drawLine(sX(1920-bar_xc), sY(bar_yc), sX(1920-bar_xc), sY(bar_yc2));
+		
+		g.setFont(pl_base);
+		FontMetrics fm = g.getFontMetrics();
+		g.setComposite(AlphaComposite.SrcOver.derive(1f));
+		int fw = fm.stringWidth(opts[0]);
+		int txty = get_opt_y() - opt_y[0];
+		g.setComposite(AlphaComposite.SrcOver.derive(1f - (float)(alphap/255f)));
+		g.drawString(opts[0], (sX(1920)-fw)/2, sY(sel_y - txty));
+		
+		fw = fm.stringWidth("select profile");
+		g.setComposite(AlphaComposite.SrcOver.derive((float)(alphap/255f)));
+		g.drawString("select profile", (sX(1920)-fw)/2, sY(sel_y - txty));
+		
+		for (int i = 1; i < opts.length; i++) {
+			g.setComposite(AlphaComposite.SrcOver.derive((float)(alpha/255f)));
+			fw = fm.stringWidth(opts[i]);
+			g.drawString(opts[i], (sX(1920)-fw)/2, sY(opt_y[i]));
+		}
+		g.drawImage(parent.get_images().get("LOGO_BK"), sX(571), sY(200), sW(777), sH(258), null);
 	}
 	
 	private void transition_out(Graphics2D g) {
 		
 	}
 	
-	private void transition_back(Graphics2D g) {
-		transition_in(g);
-	}
-	
 	private void transition_settings(Graphics2D g) {
 		g.setComposite(AlphaComposite.SrcOver.derive(1f));
 				
-		if (bar_yc < setYB) bar_yc = finYB + 2 + (int)((setYB-finYB)/2 * (1+Math.cos(theta3)));
+		if (bar_yc < setYB) bar_yc = finYB + 2 + (int)((setYB-finYB)/2 * (1+Math.cos(theta_s1)));
 		else bar_yc = setYB;
-		if (bar_yc2 > setYT) bar_yc2 = finYT - 2 - (int)((finYT-setYT)/2 * (1+Math.cos(theta3)));
+		if (bar_yc2 > setYT) bar_yc2 = finYT - 2 - (int)((finYT-setYT)/2 * (1+Math.cos(theta_s1)));
 		else bar_yc2 = setYT;
-		if (bar_xc > setXL) bar_xc = finXL - 2 - (int)((finXL-setXL)/2 * (1+Math.cos(theta3)));
+		if (bar_xc > setXL) bar_xc = finXL - 2 - (int)((finXL-setXL)/2 * (1+Math.cos(theta_s1)));
 		else bar_xc = setXL;
-		if (sel_y > setTT) sel_y = get_opt_y() - 2 - (int)((get_opt_y()-setTT)/2 * (1+Math.cos(theta3)));
+		if (sel_y > setTT) sel_y = get_opt_y() - 2 - (int)((get_opt_y()-setTT)/2 * (1+Math.cos(theta_s1)));
 		else sel_y = setTT;
 		
 		int menu_h = (bar_yc - bar_yc2) - (finYB - finYT - box_h);
@@ -198,7 +230,8 @@ public class Menu {
 		g.drawImage(parent.get_images().get("LOGO_BK"), sX(571), sY(200), sW(777), sH(258), null);
 	}
 	
-	private int get_opt_y() { return 71*curr_opt + 593; }
+	protected int get_opt_y() { return 71*curr_opt + 593; }
+	protected int get_opt_y(int num) { return 71*num + 593; }
 	
 	public void handle(KeyEvent e) {
 		switch (e.getKeyCode()) {
@@ -210,17 +243,25 @@ public class Menu {
 				if (curr_state < 2) curr_opt = (short)(curr_opt + 1 > max_opt ? max_opt : curr_opt + 1);
 				break;
 			case KeyEvent.VK_ENTER: case KeyEvent.VK_Z:
-				if (curr_state < 2) {
+				if (curr_state == 1) {
 					switch (curr_opt) {
-						case 0: curr_state = 3; break;
+						case 0: sel_y = get_opt_y(); curr_state = 2; next_state = Display.State.PROFILE; break;
 						case 1: sel_y = get_opt_y(); next_state = Display.State.SETTINGS; curr_state = 4; break;
 						case 2: System.exit(0);
 					}
 				}
+				break;
 			case KeyEvent.VK_X: case KeyEvent.VK_ESCAPE:
 				if (curr_state < 2) curr_opt = 2;
 				break;
 		}
+	}
+	
+	public void re_init(short opt) {
+		init_values();
+		curr_state = 1;
+		curr_opt = opt;
+		sel_y = get_opt_y();
 	}
 	
 	public void step() {
@@ -270,24 +311,37 @@ public class Menu {
 			}
 			break;
 		case 2: // transition to profile select
-		case 3: // profile select
-		case 4: // transition settings
 			alpha = (short)(alpha-2*dA < 0 ? 0 : alpha-2*dA);
-			theta3 += dT2;
-			if (theta3 > 2*Math.PI) { 
+			if (alpha < 200) alphap += dA;
+			if (alphap > 255) alphap = 255;
+			theta_p1 += dT2;
+			if (theta_p1 > 2*Math.PI) { 
+				parent.s_ps.re_init();
 				parent.set_state(next_state); 
-				curr_state = 6;
 			}
 			break;
-		case 5: // transition main
-		case 6: // transition from settings / profile
+		case 3: // transition main
+		case 4: // transition settings
+			alpha = (short)(alpha-2*dA < 0 ? 0 : alpha-2*dA);
+			theta_s1 += dT2;
+			if (theta_s1 > 2*Math.PI) { 
+				parent.s_sm.re_init();
+				parent.set_state(next_state); 
+			}
+			break;
 		}
 	}
+	
+	public void note_pressed(byte id, byte vel, long timestamp) {
+
+	}
+	
+	public void note_released(byte id, long timestamp) {}
+	public void damp_pressed(long timestamp) {}
+	public void damp_released(long timestamp) {}
 	
 	private int sX (int x) { return parent.scaleX(x); }
 	private int sY (int y) { return parent.scaleY(y); }
 	private int sW (int w) { return parent.scaleW(w); }
 	private int sH (int h) { return parent.scaleH(h); }
-//	private int[] sX (int[] x) { return parent.scaleX(x); }
-//	private int[] sY (int[] y) { return parent.scaleY(y); }
 }

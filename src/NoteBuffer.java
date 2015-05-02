@@ -16,11 +16,13 @@ public class NoteBuffer {
 	private ArrayList<Note> marks;
 	
 	private byte dominant;
+	private Display parent;
 	
 	/*
 	 * Initializes the note buffer, as well as the hold buffer
 	 */
-	public NoteBuffer() {
+	public NoteBuffer(Display parent) {
+		this.parent = parent;
 		this.note_buffer = new ArrayList<Note>();
 		this.hold_buffer = new ArrayList<Note>();
 		this.rel_buffer = new ArrayList<Note>();

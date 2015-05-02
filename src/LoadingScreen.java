@@ -296,6 +296,14 @@ public class LoadingScreen {
 		}
 	}
 	
+	public void note_pressed(byte id, byte vel, long timestamp) {
+		if (curr_state == 3) curr_state++;
+	}
+	
+	public void note_released(byte id, long timestamp) {}
+	public void damp_pressed(long timestamp) {}
+	public void damp_released(long timestamp) {}
+	
 	private int sX (int x) { return parent.scaleX(x); }
 	private int sY (int y) { return parent.scaleY(y); }
 	private int sH (int h) { return parent.scaleH(h); }

@@ -47,6 +47,19 @@ public class Settings {
 		}
 	}
 	
+	public Settings clone() {
+		return new Settings(new File("profile\\settings.dat"));
+	}
+	
+	public void copy_to(Settings s) {
+		s.tsig = tsig;	s.ksig = ksig;
+		s.window_size = window_size;
+		s.tempo = tempo;
+		s.chord_type = chord_type;
+		s.bgm_vol = bgm_vol; s.harm_vol = harm_vol;
+		s.harmonize = harmonize;
+	}
+	
 	public void write_settings(String filename) {
 		File settings = new File(filename);
 		settings.delete();
