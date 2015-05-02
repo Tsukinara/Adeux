@@ -21,7 +21,7 @@ public class MidiHandler {
 			try {
 				device = MidiSystem.getMidiDevice(infos[i]);
 				//add all transmitters to the device list
-				System.out.println("Attempting to open " + infos[i]);
+				System.err.println("Attempting to open " + infos[i]);
 
 				//get all transmitters
 				List<Transmitter> transmitters = device.getTransmitters();
@@ -40,9 +40,9 @@ public class MidiHandler {
 				device.open();
 				
 				//if code gets this far without throwing an exception, print a success message
-				System.out.println("Successfully opened " + device.getDeviceInfo() + "\n");
+				System.err.println("Successfully opened " + device.getDeviceInfo() + "\n");
 			} catch (MidiUnavailableException e) {
-				System.out.println("These aren't the devices you are looking for.\n");
+				System.err.println("Not the correct device.\n");
 			}
 		}
 	}
@@ -90,7 +90,7 @@ public class MidiHandler {
 				case -80: 
 					damped = ((int)data2 == 127);
 					if (!damped) buffer.undamp(timeStamp);
-					else buffer.damp();
+					else buffer.damp(timeStamp);
 					print = true; break;
 				// add note to buffer when new note is input
 				case -112:
@@ -107,10 +107,12 @@ public class MidiHandler {
 			if (print) {
 				buffer.print_buffer();
 				buffer.print_holds();
+				buffer.print_history();
 				System.out.println("Current overtone: " + Music.getNoteName(buffer.dom()));
 				System.out.println();
 			}
 		}
+		
 		public void close() {}
 
 	}

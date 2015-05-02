@@ -28,7 +28,7 @@ public class Note implements Comparable<Note> {
 	 * Generates a new note object, given the MIDI byte which was received and a
 	 * boolean representing whether or not the pedal is down when the note was entered
 	 */
-	public Note(byte id, int vel, boolean damped, long time, NoteBuffer parent) {
+	public Note(byte id, byte vel, boolean damped, long time, NoteBuffer parent) {
 		this.parent = parent;
 		this.id = id;
 		this.velocity = vel;

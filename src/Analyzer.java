@@ -10,7 +10,7 @@ public class Analyzer {
 		return 0;
 	}
 	
-	public static KeySignature get_key_signature(ArrayList<Chord> chord_history) {
+	public static KeySignature get_key_signature(ArrayList<Chord> history) {
 		return null;
 	}
 	
@@ -20,5 +20,13 @@ public class Analyzer {
 	
 	public static int get_tempo(TimeSignature ts, ArrayList<Note> note_history) {
 		return 0;
+	}
+	
+	public static Chord get_chord(ArrayList<Note> held) {
+		return null;
+	}
+	
+	public static Chord get_chord(ArrayList<Note> held, ArrayList<Chord> history) {
+		return null;
 	}
 }

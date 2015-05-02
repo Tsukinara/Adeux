@@ -26,7 +26,7 @@ import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 
 public class Display extends JFrame implements Runnable {
-
+	private static final long sT = System.nanoTime();
 	private static final long serialVersionUID = 4767630629171590730L;
 	private static final String DEFAULT_TITLE = "Project \u00c1deux";
 	private static final int s_width = Toolkit.getDefaultToolkit().getScreenSize().width;
@@ -65,7 +65,7 @@ public class Display extends JFrame implements Runnable {
 
 	public Display() {
 		super(DEFAULT_TITLE);
-		this.state = State.MENU;
+		this.state = State.LOADING;
 		this.sfxplayer = null; this.mscplayer = null;
 		this.width = s_width; this.height = s_height;
 		this.set = new Settings(new File(settings));
@@ -85,7 +85,7 @@ public class Display extends JFrame implements Runnable {
 
 		s_ls = new LoadingScreen(this);
 		s_mn = new Menu(this);
-		s_ac = new AppCore();
+		s_ac = new AppCore(this);
 		s_sm = new SettingsMenu(this);
 		s_ps = new ProfileSelect(this);
 
@@ -140,8 +140,16 @@ public class Display extends JFrame implements Runnable {
 	}
 	
 	public void note_pressed(byte id, byte vel, long timestamp) {
+		long a = (System.nanoTime() - sT)/1000, b = timestamp;
+		System.out.println("DISPLAY: " + a);
+		System.out.println("OUTPUT: " + b);
+		System.out.println("DIFFER: " + (a-b));
 		switch (state) {
-			case LOADING: s_ls.note_pressed(id, vel, timestamp); 
+			case LOADING: s_ls.note_pressed(id, vel, timestamp); break;
+			case MENU: s_mn.note_pressed(id, vel, timestamp); break;
+			case MAIN: s_ac.note_pressed(id, vel, timestamp); break;
+			case SETTINGS: s_sm.note_pressed(id, vel, timestamp); break;
+			case PROFILE: s_ps.note_pressed(id, vel, timestamp); break;
 		}
 	}
 	
@@ -247,7 +255,7 @@ public class Display extends JFrame implements Runnable {
 	}
 	
 	public NoteBuffer buffer() { return this.buffer; }
-	public void set_buffer(NoteBuffer buffer) { this.buffer = buffer; }
+	public void set_buffer(NoteBuffer buffer) { this.buffer = buffer;  s_ac.set_buffer(buffer); }
 	
 	public void play_bgm(String filename) {
 		if (mscplayer != null) mscplayer.close();
