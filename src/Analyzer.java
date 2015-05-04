@@ -159,17 +159,21 @@ public class Analyzer {
 				c = "4-137M";
 				break;
 			case 7:
-				if (keys.contains(11)) c = "F6-10m";
+				if (keys.contains(0)) c = "CAD64-6";
+				else if (keys.contains(11)) c = "F6-10m";
 				else c = "3-100m";
 				break;
 			case 8:
-				c = "4-100M";
+				if (keys.contains(5)) c = "2-110m";
+				else c = "4-100M";
 				break;
 			case 9:
 				c = "F5-10M";
 				break;
 			case 10:
-				c = "5-100M";
+				if (keys.contains(3)) c = "CAD64-1";
+				else if (keys.contains(8)) c = "5-107M";
+				else c = "5-100M";
 				break;
 			case 11:
 				c = "6-000M";
