@@ -6,6 +6,7 @@ public class Chord {
 	public short base;
 	public boolean seven;
 	public byte[] notes;
+	public String code;
 	
 	/*
 	 * FORMATTING FOR CHORD NAMES:
@@ -36,9 +37,16 @@ public class Chord {
 	 * CAD64-A
 	 * A: number 1-7, indicating the position of the chord being resolved to
 	 */
-	public Chord (String name) {
-		
+	public Chord (String code) {
+		switch (code.charAt(0)) {
+			case 'F':
+			case 'S':
+			case 'C':
+			default:
+		}
 	}
+	
+	public String code() { return this.code; }
 	
 	public String get_name() {
 		return "";

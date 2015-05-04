@@ -91,11 +91,16 @@ public class MidiHandler {
 					damped = ((int)data2 == 127);
 					if (!damped) buffer.undamp(timeStamp);
 					else buffer.damp(timeStamp);
-					print = true; break;
+					print = false; break;
 				// add note to buffer when new note is input
 				case -112:
-					buffer.add_note(data1, true, data2, timeStamp);
-					print = true; break;
+					if (message[2] > 0) {
+						buffer.add_note(data1, true, data2, timeStamp);
+						print = true; break;
+					} else {
+						buffer.release_note(data1, damped, timeStamp);
+						print = true; break;
+					}
 				// release note from buffer when note is released
 				case -128:
 					buffer.release_note(data1, damped, timeStamp);
@@ -105,11 +110,13 @@ public class MidiHandler {
 			
 			// print debug information if necessary
 			if (print) {
-				buffer.print_buffer();
-				buffer.print_holds();
-				buffer.print_history();
-				System.out.println("Current overtone: " + Music.getNoteName(buffer.dom()));
-				System.out.println();
+//				buffer.print_buffer();
+//				buffer.print_holds();
+//				buffer.print_history();
+//				System.out.println("Current overtone: " + Music.getNoteName(buffer.dom()));
+//				System.out.println();
+				String s= Analyzer.get_chord_context_free(buffer.hold_buffer, 0);
+				if (!s.equals("unknown")) System.out.println(s);
 			}
 		}
 		

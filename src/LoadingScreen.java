@@ -106,16 +106,16 @@ public class LoadingScreen {
 		g.setColor(new Color(26, 26, 26, alpha));
 		g.setFont(pl_base);
 		g.drawString("now loading", sX(844), sY(901));
-		int[] x1 = {673, 735, 735}, ys = {889, 885, 893}; g.fillPolygon(sX(x1), sY(ys), 3);
-		int[] x2 = {1247, 1185, 1185}; g.fillPolygon(sX(x2), sY(ys), 3);
+		double[] x1 = {673, 735, 735}, ys = {889, 885, 893}; g.fillPolygon(sX(x1), sY(ys), 3);
+		double[] x2 = {1247, 1185, 1185}; g.fillPolygon(sX(x2), sY(ys), 3);
 		
-		g.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
+		g.setStroke(new BasicStroke(sF(1.5f), BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
 		for (int i = 0; i < staff_ys.length; i++) {
 			int y = staff_ys[i];
 			int ix = staff_xc + 3*(520-y);
 			if (ix > staff_xs) g.drawLine(sX(staff_xs), sY(y), sX(ix < staff_xe? ix: staff_xe), sY(y));
 		}	
-		g.setStroke(new BasicStroke(3f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
+		g.setStroke(new BasicStroke(sF(3f), BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
 		for (int i = 0; i < bar_xs.length; i++) {
 			int x = bar_xs[i];
 			int iy = bar_yc + (int)(1.25*(190-x));
@@ -171,8 +171,8 @@ public class LoadingScreen {
 		
 		
 		g.setColor(parent.bg_color);
-		int[] x1 = {673, 735, 735}, ys = {889, 885, 893}; g.fillPolygon(sX(x1), sY(ys), 3);
-		int[] x2 = {1247, 1185, 1185}; g.fillPolygon(sX(x2), sY(ys), 3);
+		double[] x1 = {673, 735, 735}, ys = {889, 885, 893}; g.fillPolygon(sX(x1), sY(ys), 3);
+		double[] x2 = {1247, 1185, 1185}; g.fillPolygon(sX(x2), sY(ys), 3);
 	}
 	
 	private void draw_idle (Graphics2D g) {
@@ -186,8 +186,8 @@ public class LoadingScreen {
 		g.setFont(pl_base);
 		g.drawString("play any note to start", sX(767), sY(901));
 		
-		int[] x1 = {673, 735, 735}, ys = {889, 885, 893}; g.fillPolygon(sX(x1), sY(ys), 3);
-		int[] x2 = {1247, 1185, 1185}; g.fillPolygon(sX(x2), sY(ys), 3);
+		double[] x1 = {673, 735, 735}, ys = {889, 885, 893}; g.fillPolygon(sX(x1), sY(ys), 3);
+		double[] x2 = {1247, 1185, 1185}; g.fillPolygon(sX(x2), sY(ys), 3);
 	}
 	
 	private void transition_out (Graphics2D g) {
@@ -198,8 +198,8 @@ public class LoadingScreen {
 		g.setFont(pl_base);
 		g.drawString("play any note to start", sX(767), sY(901));
 		
-		int[] x1 = {673, 735, 735}, ys = {889, 885, 893}; g.fillPolygon(sX(x1), sY(ys), 3);
-		int[] x2 = {1247, 1185, 1185}; g.fillPolygon(sX(x2), sY(ys), 3);
+		double[] x1 = {673, 735, 735}, ys = {889, 885, 893}; g.fillPolygon(sX(x1), sY(ys), 3);
+		double[] x2 = {1247, 1185, 1185}; g.fillPolygon(sX(x2), sY(ys), 3);
 		
 		g.setColor(new Color(255, 255, 255, alpha));
 		g.fillRect(sX(0), sY(0), sW(1920), sH(1080));
@@ -214,12 +214,12 @@ public class LoadingScreen {
 	}
 	
 	private void draw_staff (Graphics2D g) {
-		g.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
+		g.setStroke(new BasicStroke(sF(1.5f), BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
 		for (int i = 0; i < staff_ys.length; i++) {
 			int y = staff_ys[i];
 			g.drawLine(sX(staff_xs), sY(y), sX(staff_xe), sY(y));
 		}
-		g.setStroke(new BasicStroke(3f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
+		g.setStroke(new BasicStroke(sF(3f), BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
 		for (int i = 0; i < bar_xs.length; i++) {
 			int x = bar_xs[i];
 			if (i == bar_xs.length - 1) g.setStroke(new BasicStroke(8f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
@@ -304,11 +304,12 @@ public class LoadingScreen {
 	public void damp_pressed(long timestamp) {}
 	public void damp_released(long timestamp) {}
 	
-	private int sX (int x) { return parent.scaleX(x); }
-	private int sY (int y) { return parent.scaleY(y); }
-	private int sH (int h) { return parent.scaleH(h); }
-	private int sW (int w) { return parent.scaleW(w); }
-	private int[] sX (int[] x) { return parent.scaleX(x); }
-	private int[] sY (int[] y) { return parent.scaleY(y); }
+	private int sX (double x) { return parent.scaleX(x); }
+	private int sY (double y) { return parent.scaleY(y); }
+	private int sH (double h) { return parent.scaleH(h); }
+	private int sW (double w) { return parent.scaleW(w); }
+	private float sF (float f) { return parent.scaleF(f); }
+	private int[] sX (double[] x) { return parent.scaleX(x); }
+	private int[] sY (double[] y) { return parent.scaleY(y); }
 	
 }

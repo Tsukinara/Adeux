@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 public class ProfileSelect {
-	private static final short dA = 10, dL1 = 15, dA2 = 5;
+	private static final short dA = 10, dL1 = 15, dA2 = 5, fin_barh = 115;
 	private static final float dT = 0.05f;
 	private static final int max_len = 445;
 	private static final int proXL = 694, proYB = 944, proYT = 136;
@@ -28,8 +28,8 @@ public class ProfileSelect {
 	private Graphics2D tmp;
 	private ArrayList<String> p;
 	private Display parent;	
-	private short curr_state, curr_opt, bar_height, alpha, alpha2, alpha3;
-	private float theta;
+	private short curr_state, curr_opt, bar_h1, bar_h2, alpha, alpha2, alpha3;
+	private float theta, theta2;
 	private int sel_y, bar_yc, bar_yc2, bar_xc, tit_y;
 	private Font pl_base, opt_base;
 	private String npn;
@@ -46,9 +46,9 @@ public class ProfileSelect {
 		this.pl_base = new Font("Plantin MT Std", Font.PLAIN, sH(48));
 		this.opt_base = new Font("Plantin MT Std", Font.PLAIN, sH(38));
 		this.tit_y = proTT; this.bar_yc = 250;
-		this.theta = (float)Math.PI;
+		this.theta = (float)Math.PI; this.theta2 = (float)Math.PI;
 		this.alpha = 0; this.alpha2 = 0; this.alpha3 = 0;
-		this.bar_height = 50; this.sel_y = get_opt_y(0);
+		this.bar_h1 = 50; this.bar_h2 = 50; this.sel_y = get_opt_y(0);
 		this.bar_xc = proXL; this.bar_yc2 = proYT;
 	}
 	
@@ -69,8 +69,8 @@ public class ProfileSelect {
 		for (Snow s : parent.snow) g.fillOval(sX(s.x), sY(s.y), sW(s.dia), sH(s.dia));
 		
 		g.setColor(parent.bg_color);
-		g.fillRect(sX(0), sY(0), sW(1920), sH(this.bar_height));
-		g.fillRect(sX(0), sY(1080-bar_height+1), sW(1920), sH(bar_height));	
+		g.fillRect(sX(0), sY(0), sW(1920), sH(bar_h1));
+		g.fillRect(sX(0), sY(1080-bar_h2+1), sW(1920), sH(bar_h2));	
 	}
 	
 	private void draw_menu (Graphics2D g) {
@@ -89,7 +89,7 @@ public class ProfileSelect {
 		g.fillRect(sX(proXL), sY(sel_y), sW(1920-(2*proXL)), sH(opt_h));
 		
 		g.setColor(parent.bg_color);
-		g.setStroke(new BasicStroke(8, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+		g.setStroke(new BasicStroke(sW(8), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		g.drawLine(sX(proXL), sY(proYB), sX(proXL), sY(proYT));
 		g.drawLine(sX(1920-proXL), sY(proYB), sX(1920-proXL), sY(proYT));
 		
@@ -127,7 +127,7 @@ public class ProfileSelect {
 	private void draw_new(Graphics2D g) {
 		g.setComposite(AlphaComposite.SrcOver.derive(alpha/255f));
 		g.setColor(new Color(83, 102, 112, 200));
-		g.fillRect(sX(0), sY(bar_height), sW(1920), sH(980));
+		g.fillRect(sX(0), sY(bar_h1), sW(1920), sH(980));
 		
 		g.setColor(new Color(173, 208, 226, 225));
 		g.fillRect(sX(new_x), sY(new_y), sW(new_w), sH(new_h));
@@ -143,7 +143,7 @@ public class ProfileSelect {
 		int fw = g.getFontMetrics().stringWidth("new profile");
 		g.drawString("new profile", (sX(1920)-fw)/2, sY(nti_y + 50));
 		
-		g.setStroke(new BasicStroke(8, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+		g.setStroke(new BasicStroke(sF(8), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		g.drawLine(sX(new_x), sY(new_y-32), sX(new_x), sY(new_y+new_h+32));
 		g.drawLine(sX(1920-new_x), sY(new_y-32), sX(1920-new_x), sY(new_y+new_h+32));
 		
@@ -164,6 +164,7 @@ public class ProfileSelect {
 		else bar_xc = finXL;
 		if (tit_y < parent.s_mn.get_opt_y(0)) tit_y = proTT + 2 + (int)((parent.s_mn.get_opt_y(0) - proTT)/2 * (1+Math.cos(theta)));
 		else tit_y = parent.s_mn.get_opt_y(0);
+		
 		int menu_h = (bar_yc - bar_yc2) - (finYB - finYT - box_h);
 		int menu_y = bar_yc2 + (bar_yc - bar_yc2 - menu_h)/2;
 		
@@ -178,7 +179,7 @@ public class ProfileSelect {
 		
 		// draw menu borders
 		g.setColor(parent.bg_color);
-		g.setStroke(new BasicStroke(8, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+		g.setStroke(new BasicStroke(sF(8), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		g.drawLine(sX(bar_xc), sY(bar_yc), sX(bar_xc), sY(bar_yc2));
 		g.drawLine(sX(1920-bar_xc), sY(bar_yc), sX(1920-bar_xc), sY(bar_yc2));
 		
@@ -220,10 +221,16 @@ public class ProfileSelect {
 	}
 	
 	private void transition_main(Graphics2D g) {
+		if (bar_h1 < fin_barh) bar_h1 = (short)(bar_h2 + 2 + (int)((fin_barh-bar_h2)/2 * (1+Math.cos(theta2))));
+		else bar_h1 = fin_barh;
+		
 		transition_in(g);
 		g.setColor(Color.WHITE);
 		g.setComposite(AlphaComposite.SrcOver.derive(alpha3/255f));
-		g.fillRect(sX(0), sY(bar_height), sW(1920), sH(980));
+		g.fillRect(sX(0), sY(bar_h1), sW(1920), sH(1080-bar_h2-bar_h1));
+		
+		g.setColor(parent.bg_color);
+		g.fillRect(sX(0), sY(0), sW(1920), sH(bar_h1));
 	}
 	
 	public void re_init() {
@@ -345,13 +352,20 @@ public class ProfileSelect {
 				theta += dT;
 				if (theta > 2*Math.PI) theta = (float)(-2*Math.PI);
 				if (alpha2 == 255) {
-					parent.s_mn.re_init((short)0);
+					parent.s_mn.re_init(0, 1);
 					parent.set_state(Display.State.MENU);
 				}
+							
 				break;
 			case 4: // transition forwards
+				theta2 += dT;
+				if (theta > 2*Math.PI) theta = (float)(-2*Math.PI);
 				if (alpha3 < 255) alpha3 += dA2;
-				if (alpha3 >= 255) { alpha3 = 255; parent.set_state(Display.State.MAIN); }
+				if (alpha3 >= 255) { 
+					alpha3 = 255; 
+					parent.stop_bgm(); parent.s_ac.re_init();
+					parent.set_state(Display.State.MAIN); 
+				}
 		}
 	}
 	
@@ -367,4 +381,5 @@ public class ProfileSelect {
 	private int sY (int y) { return parent.scaleY(y); }
 	private int sW (int w) { return parent.scaleW(w); }
 	private int sH (int h) { return parent.scaleH(h); }
+	private float sF (float f) { return parent.scaleF(f); }
 }

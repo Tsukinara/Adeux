@@ -31,6 +31,7 @@ public class Display extends JFrame implements Runnable {
 	private static final String DEFAULT_TITLE = "Project \u00c1deux";
 	private static final int s_width = Toolkit.getDefaultToolkit().getScreenSize().width;
 	private static final int s_height = Toolkit.getDefaultToolkit().getScreenSize().height;
+	private static final int num_snowflakes = 150;
 	public static final String font_path = "resources\\fonts\\";
 	public static final String img_path = "resources\\images\\";
 	public static final String musc_path = "resources\\music\\";
@@ -65,7 +66,7 @@ public class Display extends JFrame implements Runnable {
 
 	public Display() {
 		super(DEFAULT_TITLE);
-		this.state = State.LOADING;
+		this.state = State.MAIN;
 		this.sfxplayer = null; this.mscplayer = null;
 		this.width = s_width; this.height = s_height;
 		this.set = new Settings(new File(settings));
@@ -140,10 +141,6 @@ public class Display extends JFrame implements Runnable {
 	}
 	
 	public void note_pressed(byte id, byte vel, long timestamp) {
-		long a = (System.nanoTime() - sT)/1000, b = timestamp;
-		System.out.println("DISPLAY: " + a);
-		System.out.println("OUTPUT: " + b);
-		System.out.println("DIFFER: " + (a-b));
 		switch (state) {
 			case LOADING: s_ls.note_pressed(id, vel, timestamp); break;
 			case MENU: s_mn.note_pressed(id, vel, timestamp); break;
@@ -154,15 +151,33 @@ public class Display extends JFrame implements Runnable {
 	}
 	
 	public void note_released(byte id, long timestamp) {
-		
+		switch (state) {
+			case LOADING: s_ls.note_released(id, timestamp); break;
+			case MENU: s_mn.note_released(id, timestamp); break;
+			case MAIN: s_ac.note_released(id, timestamp); break;
+			case SETTINGS: s_sm.note_released(id, timestamp); break;
+			case PROFILE: s_ps.note_released(id, timestamp); break;
+		}
 	}
 	
 	public void damp_pressed(long timestamp) {
-		
+		switch (state) {
+			case LOADING: s_ls.damp_pressed(timestamp); break;
+			case MENU: s_mn.damp_pressed(timestamp); break;
+			case MAIN: s_ac.damp_pressed(timestamp); break;
+			case SETTINGS: s_sm.damp_pressed(timestamp); break;
+			case PROFILE: s_ps.damp_pressed(timestamp); break;
+		}		
 	}
 	
 	public void damp_released(long timestamp) {
-		
+		switch (state) {
+			case LOADING: s_ls.damp_released(timestamp); break;
+			case MENU: s_mn.damp_released(timestamp); break;
+			case MAIN: s_ac.damp_released(timestamp); break;
+			case SETTINGS: s_sm.damp_released(timestamp); break;
+			case PROFILE: s_ps.damp_released(timestamp); break;
+		}		
 	}
 
 	private void initialize_basics() {
@@ -189,6 +204,12 @@ public class Display extends JFrame implements Runnable {
 	}
 
 	public void load_all_resources() {
+		snow = new Snow[num_snowflakes];
+		for (int i = 0; i < num_snowflakes; i++)
+			snow[i] = new Snow(
+					Math.random()*scaleX(1920), Math.random()*scaleY(1080), 
+					Math.random()*scaleW(8)+1, Math.random()*scaleH(6)+scaleH(4), 
+					Math.random()*scaleW(6)+scaleW(4));
 		prof = new Profile();
 		File dir = new File("profile");
 		profiles = new ArrayList<String>();
@@ -213,35 +234,6 @@ public class Display extends JFrame implements Runnable {
 	
 	public Profile profile() { return prof; }
 
-	public int scaleX (int x_old) { return ((int) ((double)x_old / 1920.0 * (double)this.draw_width)) + offset_x; }	
-	public int scaleW (int w_old) { return (int) ((double)w_old / 1920.0 * (double)this.draw_width); }
-	public int scaleY (int y_old) { return ((int) ((double)y_old / 1080.0 * (double)this.draw_height)) + offset_y; }
-	public int scaleH (int h_old) { return (int) ((double)h_old / 1080.0 * (double)this.draw_height); }
-	
-	public int[] scaleX (int[] x_old) {
-		int[] x_new = new int[x_old.length];
-		for(int i = 0; i < x_old.length; i++) {
-			x_new[i] = scaleX(x_old[i]);
-		}
-		return x_new;
-	}
-
-	public int[] scaleY (int[] y_old) {
-		int[] y_new = new int[y_old.length];
-		for(int i = 0; i < y_old.length; i++) {
-			y_new[i] = scaleY(y_old[i]);
-		}
-		return y_new;
-	}
-	
-	public int[] scaleH (int[] h_old) {
-		int[] h_new = new int[h_old.length];
-		for(int i = 0; i < h_old.length; i++) {
-			h_new[i] = scaleH(h_old[i]);
-		}
-		return h_new;
-	}
-
 	public void paint(Graphics g) {
 		Image i=createImage(getWidth(), getHeight()); 
 		render((i.getGraphics()));
@@ -262,7 +254,7 @@ public class Display extends JFrame implements Runnable {
 		mscplayer = new MPlayer(musc_path + filename);
 		mscplayer.loop();
 	}
-	public void stop_bgm(String filename) { if (mscplayer != null) mscplayer.close(); }
+	public void stop_bgm() { if (mscplayer != null) mscplayer.close(); }
 
 	public void render(Graphics g) {
 		super.paint(g);
@@ -271,21 +263,11 @@ public class Display extends JFrame implements Runnable {
 		g2d.addRenderingHints(new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON));
 
 		switch (this.state) {
-		case LOADING:
-			s_ls.render(g2d);
-			break;
-		case MENU:
-			s_mn.render(g2d);
-			break;
-		case MAIN:
-			s_ac.render(g2d);
-			break;
-		case SETTINGS:
-			s_sm.render(g2d);
-			break;
-		case PROFILE:
-			s_ps.render(g2d);
-			break;
+		case LOADING:	s_ls.render(g2d);	break;
+		case MENU:		s_mn.render(g2d);	break;
+		case MAIN:		s_ac.render(g2d);	break;
+		case SETTINGS:	s_sm.render(g2d);	break;
+		case PROFILE:	s_ps.render(g2d);	break;
 		}
 	}
 	
@@ -310,5 +292,35 @@ public class Display extends JFrame implements Runnable {
 			try { Thread.sleep(20); } 
 			catch (Exception e) { e.printStackTrace(); }
 		}
+	}
+	
+	public int scaleX (double x_old) { return ((int) (x_old / 1920.0 * (double)this.draw_width)) + offset_x; }	
+	public int scaleW (double w_old) { return (int) (w_old / 1920.0 * (double)this.draw_width); }
+	public float scaleF (float f_old) { return (int) (f_old / 1920.0 * (double)this.draw_width); }
+	public int scaleY (double y_old) { return ((int) (y_old / 1080.0 * (double)this.draw_height)) + offset_y; }
+	public int scaleH (double h_old) { return (int) (h_old / 1080.0 * (double)this.draw_height); }
+	
+	public int[] scaleX (double[] x_old) {
+		int[] x_new = new int[x_old.length];
+		for(int i = 0; i < x_old.length; i++) {
+			x_new[i] = scaleX(x_old[i]);
+		}
+		return x_new;
+	}
+
+	public int[] scaleY (double[] y_old) {
+		int[] y_new = new int[y_old.length];
+		for(int i = 0; i < y_old.length; i++) {
+			y_new[i] = scaleY(y_old[i]);
+		}
+		return y_new;
+	}
+	
+	public int[] scaleH (double[] h_old) {
+		int[] h_new = new int[h_old.length];
+		for(int i = 0; i < h_old.length; i++) {
+			h_new[i] = scaleH(h_old[i]);
+		}
+		return h_new;
 	}
 }

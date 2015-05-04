@@ -106,6 +106,7 @@ public class Note implements Comparable<Note> {
 	public byte id() { return this.id; }
 	public int key() { return this.key; }
 	public int vel() { return this.velocity; }
+	public int value() { return this.value; }
 	public int octave() { return this.octave; }
 	public long get_end() { return this.endTime; }
 	public long get_start() { return this.startTime; }

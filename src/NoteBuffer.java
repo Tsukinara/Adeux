@@ -33,6 +33,7 @@ public class NoteBuffer {
 		this.history = new ArrayList<Note>();
 		this.marks = new ArrayList<Note>();
 		this.damped = false;
+		this.bass = new ArrayList<Note>();
 	}
 	
 	/*
@@ -53,7 +54,7 @@ public class NoteBuffer {
 		note_buffer.add(n);
 		hold_buffer.add(n);
 		add_history(n);
-		parent.note_pressed(id, vel, time);
+		if (parent != null) parent.note_pressed(id, vel, time);
 	}
 	
 	public synchronized void change_dom(Note n) {
@@ -84,7 +85,7 @@ public class NoteBuffer {
 			hold_buffer.remove(tmp);
 			tmp.release(time, damped);
 		}
-		parent.note_released(id, time);
+		if (parent != null) parent.note_released(id, time);
 	}
 	
 	/*
@@ -101,7 +102,7 @@ public class NoteBuffer {
 		for (Note n : marks) {
 			note_buffer.remove(n);
 		}
-		parent.damp_released(time);
+		if (parent != null) parent.damp_released(time);
 	}
 	
 	public synchronized void damp(long time) {
@@ -115,10 +116,25 @@ public class NoteBuffer {
 			}
 		}
 		if (new_dom != null) change_dom(new_dom);
-		parent.damp_pressed(time);
+		if (parent != null) parent.damp_pressed(time);
 	}
 	
 	public byte dom() { return this.dominant; }
+	
+	public synchronized boolean is_held(int val) {
+		for (Note n : hold_buffer) if (n.value() == val) return true;
+		return false;
+	}
+	
+	public synchronized boolean is_rel(int val) {
+		for (Note n : rel_buffer) if (n.value() == val) return true;
+		return false;
+	}
+	
+	public synchronized boolean in_buf(int val) {
+		for (Note n : note_buffer) if (n.value() == val) return true;
+		return false;
+	}
 	
 	/*
 	 * Removes a note from the note buffer, and sets it to null before garbage collection.
@@ -149,25 +165,19 @@ public class NoteBuffer {
 	 */
 	public synchronized void print_holds() {
 		System.out.print("CURRENTLY HELD: ");
-		for (Note n : hold_buffer) {
-			System.out.print(Music.getNoteName(n) + ", ");
-		}
+		for (Note n : hold_buffer) System.out.print(Music.getNoteName(n) + ", ");
 		System.out.println();
 	}
 	
 	public synchronized void print_buffer() {
 		System.out.print("CURRENTLY IN BUFFER: ");
-		for (Note n : note_buffer) {
-			System.out.print(Music.getNoteName(n) + ", ");
-		}
+		for (Note n : note_buffer)	System.out.print(Music.getNoteName(n) + ", ");
 		System.out.println();
 	}
 	
 	public synchronized void print_history() {
 		System.out.print("HISTORY: ");
-		for (Note n : history) {
-			System.out.print(Music.getNoteName(n) + ", ");
-		}
+		for (Note n : history) System.out.print(Music.getNoteName(n) + ", ");
 		System.out.println();
 	}
 }

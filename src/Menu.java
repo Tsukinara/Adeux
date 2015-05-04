@@ -9,7 +9,6 @@ import java.awt.event.KeyEvent;
 public class Menu {
 	private static final short dA = 5, dL = 10;
 	private static final float dT = 0.1f, dT2 = 0.07f, doA = 0.05f;
-	private static final int num_snowflakes = 200;
 	private static final short max_opt = 2;
 	private static final int origX = 960, origY = 701;
 	private static final int finXL = 760, finYB = 849, finYT = 553;
@@ -24,7 +23,8 @@ public class Menu {
 	
 	private Display parent; private Display.State next_state;
 	private Font pl_base;
-	private short curr_state, curr_opt, bar_height, alpha, alpha2, alphap, delay;
+	private short curr_state, curr_opt, bar_height, delay;
+	private short alpha, alpha2, alpha_p, alpha_m, alpha_o;
 	private int bar_xc, bar_yc, bar_yc2, txt_yc, sel_y;
 	private float theta, theta2, theta_s1, theta_p1;
 	private float[] opt_alpha, opt_da;
@@ -40,15 +40,9 @@ public class Menu {
 		this.curr_opt = 0;
 		this.opt_alpha = new float [max_opt+1]; this.opt_da = new float [max_opt+1];
 		this.bar_height = 50;
-		this.alpha = 255; this.alpha2 = 0; this.alphap = 0;
+		this.alpha = 255; this.alpha2 = 0; this.alpha_p = 0; this.alpha_m = 255; this.alpha_o = 0;
 		this.delay = 500 / 20;
 		this.sel_y = get_opt_y();
-		parent.snow = new Snow[num_snowflakes];
-		for (int i = 0; i < num_snowflakes; i++)
-			parent.snow[i] = new Snow(
-					Math.random()*sX(1920), Math.random()*sY(1080), 
-					Math.random()*sW(8)+1, Math.random()*sH(6)+sH(4), 
-					Math.random()*sW(8)+sW(5));
 		this.theta = (float)Math.PI; this.theta2 = (float)Math.PI;
 		this.theta_s1 = (float)Math.PI; this.theta_p1 = (float)Math.PI;
 		this.bar_xc = origX; this.bar_yc = origY; this.txt_yc = 590;
@@ -63,8 +57,9 @@ public class Menu {
 			case 0: transition_in(g); break;
 			case 1: opt_select(g); break;
 			case 2: transition_profile(g); break;
-			case 3: transition_out(g); break;
+			case 3: transition_back(g); break;
 			case 4: transition_settings(g); break;
+			case 5: exeunt(g);
 		}
 	}
 		
@@ -89,7 +84,7 @@ public class Menu {
 		g.fillRect(sX(0), sY(0), sW(1920), sH(this.bar_height));
 		g.fillRect(sX(0), sY(1080-bar_height+1), sW(1920), sH(this.bar_height));
 		
-		g.setStroke(new BasicStroke(8, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+		g.setStroke(new BasicStroke(sF(8), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		if (bar_yc < finYB) bar_yc = origY + 1 + (int)((finYB-origY)/2 * (1+Math.cos(theta)));
 		else bar_yc = finYB;
 		if (bar_xc > finXL) bar_xc = origX - 1 - (int)((origX-finXL)/2 * (1+Math.cos(theta2)));
@@ -103,6 +98,7 @@ public class Menu {
 			int a = ((txt_yc-sH(930))/2 > 255 ? 255 : (txt_yc - sH(930))/2);
 			g.setColor(new Color(255, 255, 255, a));
 			g.fillRect(sX(finXL), sY(sel_y), sW(box_w), sH(sel_h));
+			if (a == 255) flag_load = true;
 		}
 		
 		g.setColor(new Color(26, 26, 26, alpha2));
@@ -115,7 +111,6 @@ public class Menu {
 			g.setComposite(AlphaComposite.SrcOver.derive(opt_alpha[i]));
 			int fw = g.getFontMetrics().stringWidth(opts[i]);
 			g.drawString(opts[i], (sX(1920)-fw)/2, sY(opt_y[i]));
-			if (i == opts.length - 1 && opt_alpha[i] == 1f) flag_load = true;
 		}
 	}
 	
@@ -128,7 +123,7 @@ public class Menu {
 		g.fillRect(sX(finXL), sY(sel_y), sW(box_w), sH(sel_h));
 		
 		g.setColor(parent.bg_color);
-		g.setStroke(new BasicStroke(8, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+		g.setStroke(new BasicStroke(sF(8), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		g.drawLine(sX(finXL), sY(finYB), sX(finXL), sY(finYT));
 		g.drawLine(sX(1920-finXL), sY(finYB), sX(1920-finXL), sY(finYT));
 		
@@ -160,7 +155,7 @@ public class Menu {
 		g.fillRect(sX(bar_xc), sY(sel_y), sW(2*(origX-bar_xc)), sH(sel_h));
 		
 		g.setColor(parent.bg_color);
-		g.setStroke(new BasicStroke(8, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+		g.setStroke(new BasicStroke(sF(8), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		g.drawLine(sX(bar_xc), sY(bar_yc), sX(bar_xc), sY(bar_yc2));
 		g.drawLine(sX(1920-bar_xc), sY(bar_yc), sX(1920-bar_xc), sY(bar_yc2));
 		
@@ -169,11 +164,11 @@ public class Menu {
 		g.setComposite(AlphaComposite.SrcOver.derive(1f));
 		int fw = fm.stringWidth(opts[0]);
 		int txty = get_opt_y() - opt_y[0];
-		g.setComposite(AlphaComposite.SrcOver.derive(1f - (float)(alphap/255f)));
+		g.setComposite(AlphaComposite.SrcOver.derive(1f - (float)(alpha_p/255f)));
 		g.drawString(opts[0], (sX(1920)-fw)/2, sY(sel_y - txty));
 		
 		fw = fm.stringWidth("select profile");
-		g.setComposite(AlphaComposite.SrcOver.derive((float)(alphap/255f)));
+		g.setComposite(AlphaComposite.SrcOver.derive((float)(alpha_p/255f)));
 		g.drawString("select profile", (sX(1920)-fw)/2, sY(sel_y - txty));
 		
 		for (int i = 1; i < opts.length; i++) {
@@ -184,8 +179,16 @@ public class Menu {
 		g.drawImage(parent.get_images().get("LOGO_BK"), sX(571), sY(200), sW(777), sH(258), null);
 	}
 	
-	private void transition_out(Graphics2D g) {
-		
+	private void transition_back(Graphics2D g) {
+		opt_select(g);
+		g.setColor(new Color(255, 255, 255, alpha_m));
+		g.fillRect(sX(0), sY(bar_height), sW(1920), sH(1080-2*bar_height));
+	}
+	
+	private void exeunt(Graphics2D g) {
+		opt_select(g);
+		g.setColor(new Color(255, 255, 255, alpha_o));
+		g.fillRect(sX(0), sY(0), sW(1920), sH(1080));
 	}
 	
 	private void transition_settings(Graphics2D g) {
@@ -209,7 +212,7 @@ public class Menu {
 		g.fillRect(sX(bar_xc), sY(sel_y), sW(2*(origX-bar_xc)), sH(sel_h));
 		
 		g.setColor(parent.bg_color);
-		g.setStroke(new BasicStroke(8, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+		g.setStroke(new BasicStroke(sF(8), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		g.drawLine(sX(bar_xc), sY(bar_yc), sX(bar_xc), sY(bar_yc2));
 		g.drawLine(sX(1920-bar_xc), sY(bar_yc), sX(1920-bar_xc), sY(bar_yc2));
 		
@@ -247,7 +250,7 @@ public class Menu {
 					switch (curr_opt) {
 						case 0: sel_y = get_opt_y(); curr_state = 2; next_state = Display.State.PROFILE; break;
 						case 1: sel_y = get_opt_y(); next_state = Display.State.SETTINGS; curr_state = 4; break;
-						case 2: System.exit(0);
+						case 2: sel_y = get_opt_y(); curr_state = 5;
 					}
 				}
 				break;
@@ -257,10 +260,10 @@ public class Menu {
 		}
 	}
 	
-	public void re_init(short opt) {
+	public void re_init(int opt, int state) {
 		init_values();
-		curr_state = 1;
-		curr_opt = opt;
+		curr_state = (short)state;
+		curr_opt = (short)opt;
 		sel_y = get_opt_y();
 	}
 	
@@ -312,15 +315,18 @@ public class Menu {
 			break;
 		case 2: // transition to profile select
 			alpha = (short)(alpha-2*dA < 0 ? 0 : alpha-2*dA);
-			if (alpha < 200) alphap += dA;
-			if (alphap > 255) alphap = 255;
+			if (alpha < 200) alpha_p += dA;
+			if (alpha_p > 255) alpha_p = 255;
 			theta_p1 += dT2;
 			if (theta_p1 > 2*Math.PI) { 
 				parent.s_ps.re_init();
 				parent.set_state(next_state); 
 			}
 			break;
-		case 3: // transition main
+		case 3: // transition back from main
+			alpha_m = (short)(alpha_m - 2*dA < 0 ? 0 : alpha_m - 2*dA);
+			if (alpha_m == 0) curr_state = 1;
+			break;
 		case 4: // transition settings
 			alpha = (short)(alpha-2*dA < 0 ? 0 : alpha-2*dA);
 			theta_s1 += dT2;
@@ -329,6 +335,11 @@ public class Menu {
 				parent.set_state(next_state); 
 			}
 			break;
+		case 5: // fade out
+			alpha_o = (short)(alpha_o+dA > 255 ? 255 : alpha_o+dA);
+			if (alpha_o == 255) delay++;
+			if (delay > 600/20) System.exit(0); 
+			
 		}
 	}
 	
@@ -344,4 +355,5 @@ public class Menu {
 	private int sY (int y) { return parent.scaleY(y); }
 	private int sW (int w) { return parent.scaleW(w); }
 	private int sH (int h) { return parent.scaleH(h); }
+	private float sF (float f) { return parent.scaleF(f); }
 }

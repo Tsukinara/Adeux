@@ -48,6 +48,7 @@ public class TimeSignature {
 			case COMPOUND_QUADRUPLE: this.type = Type.SIMPLE_DUPLE; break;
 			default: this.type = Type.UNKNOWN; break;
 		}
+		update_hi_lo();
 	}
 	
 	public void decrement() {
@@ -59,6 +60,19 @@ public class TimeSignature {
 			case COMPOUND_TRIPLE: this.type = Type.COMPOUND_DUPLE; break;
 			case COMPOUND_QUADRUPLE: this.type = Type.COMPOUND_TRIPLE; break;
 			default: this.type = Type.UNKNOWN; break;
+		}
+		update_hi_lo();
+	}
+	
+	private void update_hi_lo() {
+		switch (type) {
+			case SIMPLE_DUPLE:	hi = 2; lo = 4; break;
+			case SIMPLE_TRIPLE: hi = 3; lo = 4; break;
+			case SIMPLE_QUADRUPLE: hi = 4; lo = 4; break;
+			case COMPOUND_DUPLE: hi = 6; lo = 8; break;
+			case COMPOUND_TRIPLE: hi = 9; lo = 8; break;
+			case COMPOUND_QUADRUPLE: hi = 12; lo = 8; break;
+			default: hi = 0; lo = 0;
 		}
 	}
 }

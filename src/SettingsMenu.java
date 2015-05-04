@@ -80,7 +80,7 @@ public class SettingsMenu {
 		g.fillRect(sX(setXL), sY(sel_y), sW(1920-(2*setXL)), sH(opt_h));
 		
 		g.setColor(parent.bg_color);
-		g.setStroke(new BasicStroke(8, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+		g.setStroke(new BasicStroke(sF(8), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		g.drawLine(sX(setXL), sY(setYB), sX(setXL), sY(setYT));
 		g.drawLine(sX(1920-setXL), sY(setYB), sX(1920-setXL), sY(setYT));
 		
@@ -129,7 +129,7 @@ public class SettingsMenu {
 		
 		// draw menu borders
 		g.setColor(parent.bg_color);
-		g.setStroke(new BasicStroke(8, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+		g.setStroke(new BasicStroke(sF(8), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		g.drawLine(sX(bar_xc), sY(bar_yc), sX(bar_xc), sY(bar_yc2));
 		g.drawLine(sX(1920-bar_xc), sY(bar_yc), sX(1920-bar_xc), sY(bar_yc2));
 		
@@ -236,7 +236,7 @@ public class SettingsMenu {
 				if (curr) {
 					g.setColor(shim);
 					g.setFont(new Font("Plantin MT Std", Font.PLAIN, sH(28)));
-					g.drawString("(play any chord to set)", sX(1082), sY(y));
+					g.drawString("(play any triad to set)", sX(1082), sY(y));
 				}
 				break;
 			case 6:
@@ -343,17 +343,31 @@ public class SettingsMenu {
 			theta += dT;
 			if (theta > 2*Math.PI) theta = (float)(-2*Math.PI);
 			if (alpha2 == 255) {
-				parent.s_mn.re_init((short)1);
+				parent.s_mn.re_init(1, 1);
 				parent.set_state(next_state);
 			}
 		}
 	}
 	
 	public void note_pressed(byte id, byte vel, long timestamp) {
-
+		curr_opt = 5;
+		String c = Analyzer.get_chord_context_free(parent.buffer().hold_buffer, 3);
+		if (!c.equals("unknown") && !c.contains("dim") && !c.contains("7")) {
+			s.ksig.key = c.charAt(0);
+			s.ksig.type = (c.charAt(1) == '#' || c.charAt(1) == 'b') ? c.charAt(1) : 'n';
+			s.ksig.major = c.contains("maj");
+		}
 	}
 	
-	public void note_released(byte id, long timestamp) {}
+	public void note_released(byte id, long timestamp) {
+		curr_opt = 5;
+		String c = Analyzer.get_chord_context_free(parent.buffer().hold_buffer, 3);
+		if (!c.equals("unknown") && !c.contains("dim") && !c.contains("7")) {
+			s.ksig.key = c.charAt(0);
+			s.ksig.type = (c.charAt(1) == '#' || c.charAt(1) == 'b') ? c.charAt(1) : 'n';
+			s.ksig.major = c.contains("maj");
+		}
+	}
 	public void damp_pressed(long timestamp) {}
 	public void damp_released(long timestamp) {}
 	
@@ -361,4 +375,5 @@ public class SettingsMenu {
 	private int sY (int y) { return parent.scaleY(y); }
 	private int sW (int w) { return parent.scaleW(w); }
 	private int sH (int h) { return parent.scaleH(h); }
+	private float sF (float f) { return parent.scaleF(f); }
 }
