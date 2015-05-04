@@ -144,10 +144,13 @@ public class Analyzer {
 				c = "7-000M";
 				break;
 			case 2:
-				c = "7-100d";
+				if (keys.contains(10)) c = "5-110M";
+				else c = "7-100d";
 				break;
 			case 3:
-				c = "1-100M";
+				if (keys.contains(7) && keys.contains(8)) c = "S1-40M";
+				else if (keys.contains(0)) c = "6-110m";
+				else c = "1-100M";
 				break;
 			case 4:
 				c = "F2-10m";
@@ -160,7 +163,7 @@ public class Analyzer {
 				break;
 			case 7:
 				if (keys.contains(0)) c = "CAD64-6";
-				else if (keys.contains(11)) c = "F6-10m";
+				else if (keys.contains(11)) c = "F6-00m";
 				else c = "3-100m";
 				break;
 			case 8:
@@ -171,12 +174,15 @@ public class Analyzer {
 				c = "F5-10M";
 				break;
 			case 10:
-				if (keys.contains(3)) c = "CAD64-1";
+				if (keys.contains(3) && keys.contains(5)) c = "S5-40M";
+				else if (keys.contains(3)) c = "CAD64-1";
 				else if (keys.contains(8)) c = "5-107M";
 				else c = "5-100M";
 				break;
 			case 11:
-				c = "6-000M";
+				if (keys.contains(6)) c = "6-000M";
+				else if (keys.contains(8)) c = "4-100m";
+				else c = "F6-10m";
 				break;
 		}
 		return new Chord(c);

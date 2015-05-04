@@ -353,6 +353,7 @@ public class SettingsMenu {
 		curr_opt = 5;
 		String c = Analyzer.get_chord_context_free(parent.buffer().hold_buffer, 3);
 		if (!c.equals("unknown") && !c.contains("dim") && !c.contains("7")) {
+			if (s.ksig == null) s.ksig = new KeySignature("C", false);
 			s.ksig.key = c.charAt(0);
 			s.ksig.type = (c.charAt(1) == '#' || c.charAt(1) == 'b') ? c.charAt(1) : 'n';
 			s.ksig.major = c.contains("maj");
