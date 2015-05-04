@@ -34,7 +34,9 @@ public class AppCore {
 	private final static int w_lookup[] = { 1, 3, 4, 6, 8, 9, 11, 13, 15, 16, 18, 20, 21, 23, 25, 27, 28, 30, 32, 33, 35, 37, 39, 40, 42, 44, 45, 47, 49, 51, 52, 54, 56, 57, 59, 61, 63, 64, 66, 68, 69, 71, 73, 75, 76, 78, 80, 81, 83, 85, 87, 88 };
 	private final static int b_lookup[] = { 2, 5, 7, 10, 12, 14, 17, 19, 22, 24, 26, 29, 31, 34, 36, 38, 41, 43, 46, 48, 50, 53, 55, 58, 60, 62, 65, 67, 70, 72, 74, 77, 79, 82, 84, 86 };
 	
+	private int curr_tempo;
 	private Color p_color;
+	private Chord curr_chord;
 	private LinearGradientPaint l1, l2, l3;
 	private ArrayList<Integer> start, end, key;
 	private ArrayList<Color> histc;
@@ -53,6 +55,7 @@ public class AppCore {
 	}
 	
 	public void init_values() {
+		this.curr_tempo = 138;
 		this.start = new ArrayList<Integer>();
 		this.end = new ArrayList<Integer>();
 		this.key = new ArrayList<Integer>();
@@ -118,6 +121,7 @@ public class AppCore {
 		
 		g.setComposite(AlphaComposite.SrcOver.derive(1f-(alpha/255f)));
 		g.drawImage(parent.get_images().get("LOGO_WH"), sX(779), sY(20), sW(362), sH(83), null);
+		
 	}
 	
 	private void draw_primary(Graphics2D g) {
@@ -178,17 +182,26 @@ public class AppCore {
 			}
 		}
 		if (parent.set.tempo != -1) g.drawString(parent.set.tempo + " bpm", sX(nx), sY(251.3));
-		else g.drawString("temp", sX(nx), sY(251.3));
+		else g.drawString(curr_tempo + " bpm", sX(nx), sY(251.3));
 		
 		if (parent.set.tsig != null) g.drawString(parent.set.tsig.getTS(), sX(nx), sY(308.3));
 		
+		Chord c = Analyzer.get_chord(nb.note_buffer, null);
+		if (c != null) curr_chord = c;
+		if (curr_chord != null) curr_chord.draw_roman(g, sX(1920/2), sY(288), sH(154));
+		
 		g.setColor(new Color(129, 164, 207));
 		g.fillRect(sX(1320), sY(140), sW(600), sH(66));
+		
+		g.setColor(parent.bg_color);
+		g.setFont(anal_base);
+		fw = g.getFontMetrics().stringWidth("predicted chords");
+		g.drawString("predicted chords", sX(1320) + (sX(600)-fw)/2, sY(186));
 	}
 	
 	private void draw_history(Graphics2D g) {
 		g.setPaint(l2);
-		g.fillRect(sX(104), sY(anal_s), sW(1712), sH(970-anal_s));
+		g.fillRect(sX(104), sY(anal_s), sW(1712), sH(950-anal_s));
 		for (int i = 0; i < key.size(); i++) {
 			int k = key.get(i);
 			if (has(w_lookup, k)) {
@@ -304,6 +317,9 @@ public class AppCore {
 	}
 	
 	public void step() {
+		if (Math.random() < 0.1) {
+			curr_tempo = (int)((10*Math.random()-5)+140);
+		}
 		history_step();
 		pedal_color();
 		switch (curr_state) {

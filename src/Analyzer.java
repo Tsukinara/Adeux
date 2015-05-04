@@ -128,8 +128,54 @@ public class Analyzer {
 		return out;
 	}
 	
-	public static Chord get_chord(ArrayList<Note> held, KeySignature key) {
-		return null;
+	public static Chord get_chord(ArrayList<Note> rel, KeySignature key) {
+		Collections.sort(rel);
+		if (rel.size() == 0) return null;
+		int dom = rel.get(0).key();
+		ArrayList<Integer> keys = new ArrayList<Integer>();
+		for (Note n : rel) keys.add(n.key());
+		String c = "";
+		switch (dom) {
+			case 0: 
+				if (keys.contains(4)) c = "F2-0" + (keys.contains(10)? "7" : "0") + "m";
+				else c = "6-10" + (keys.contains(10)? "7" : "0") + "m";
+				break;
+			case 1:
+				c = "7-000M";
+				break;
+			case 2:
+				c = "7-100d";
+				break;
+			case 3:
+				c = "1-100M";
+				break;
+			case 4:
+				c = "F2-10m";
+				break;
+			case 5:
+				c = "2-100m";
+				break;
+			case 6:
+				c = "4-137M";
+				break;
+			case 7:
+				if (keys.contains(11)) c = "F6-10m";
+				else c = "3-100m";
+				break;
+			case 8:
+				c = "4-100M";
+				break;
+			case 9:
+				c = "F5-10M";
+				break;
+			case 10:
+				c = "5-100M";
+				break;
+			case 11:
+				c = "6-000M";
+				break;
+		}
+		return new Chord(c);
 	}
 	
 	public static Chord get_chord(ArrayList<Note> held, ArrayList<Chord> history, KeySignature key) {

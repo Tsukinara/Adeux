@@ -1,9 +1,9 @@
 tsig	4/4
 skey	C
 styp	maj
-tmpo	140
+tmpo	-1
 harm	true
 type	roman
 bgmv	100
-hrmv	100
+hrmv	40
 disp	-1

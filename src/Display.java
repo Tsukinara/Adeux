@@ -26,7 +26,6 @@ import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 
 public class Display extends JFrame implements Runnable {
-	private static final long sT = System.nanoTime();
 	private static final long serialVersionUID = 4767630629171590730L;
 	private static final String DEFAULT_TITLE = "Project \u00c1deux";
 	private static final int s_width = Toolkit.getDefaultToolkit().getScreenSize().width;
@@ -66,7 +65,7 @@ public class Display extends JFrame implements Runnable {
 
 	public Display() {
 		super(DEFAULT_TITLE);
-		this.state = State.MAIN;
+		this.state = State.LOADING;
 		this.sfxplayer = null; this.mscplayer = null;
 		this.width = s_width; this.height = s_height;
 		this.set = new Settings(new File(settings));
@@ -192,6 +191,7 @@ public class Display extends JFrame implements Runnable {
 			ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, new File(font_path + "Tangerine_Bold.ttf")));
 			ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, new File(font_path + "Tangerine_Regular.ttf")));
 			ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, new File(font_path + "OpusTextStd.otf")));
+			ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, new File(font_path + "OpusChordsStd.otf")));
 
 			images.put("LOAD_BG", ImageIO.read(new File(img_path + "load_bg.png")));
 			images.put("LOGO_BK", ImageIO.read(new File(img_path + "logo_bk.png")));
