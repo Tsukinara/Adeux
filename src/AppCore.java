@@ -118,26 +118,6 @@ public class AppCore {
 		
 		g.setComposite(AlphaComposite.SrcOver.derive(1f-(alpha/255f)));
 		g.drawImage(parent.get_images().get("LOGO_WH"), sX(779), sY(20), sW(362), sH(83), null);
-		
-		for (int i = 0; i < key.size(); i++) {
-			int k = key.get(i);
-			if (has(w_lookup, k)) {
-				int wi = i_of(w_lookup, k);
-				double[] x = { w_tl[wi], w_tr[wi], w_tr[wi], w_tl[wi] };	
-				double[] y = { end.get(i), end.get(i), start.get(i), start.get(i)};
-				g.setColor(histc.get(i));
-				g.fillPolygon(sX(x), sY(y), 4);
-			}
-		} for (int i = 0; i < key.size(); i++) {
-			int k = key.get(i);
-			if (has(b_lookup, k)) {
-				int bi = i_of(b_lookup, k);
-				double[] x = { b_tl[bi], b_tr[bi], b_tr[bi], b_tl[bi] };
-				double[] y = { end.get(i), end.get(i), start.get(i), start.get(i) };
-				g.setColor(histc.get(i));
-				g.fillPolygon(sX(x), sY(y), 4);
-			}
-		}
 	}
 	
 	private void draw_primary(Graphics2D g) {

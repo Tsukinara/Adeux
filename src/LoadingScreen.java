@@ -41,8 +41,8 @@ public class LoadingScreen {
 	private HashMap<String, BufferedImage> images;
 	private BufferedImage highlight;
 	
-	public LoadingScreen (Display parent) {
-		this.parent = parent;
+	public LoadingScreen (Display par) {
+		this.parent = par;
 		init_values();
 		init_images();
 		new Thread() { public void run(){
