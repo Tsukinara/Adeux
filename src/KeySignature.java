@@ -6,9 +6,9 @@ public class KeySignature {
 	
 	public KeySignature(String name, boolean major) {
 		this.major = major;
-		if (major) name = name.toUpperCase();
-		else name = name.toLowerCase();
 		this.key = name.charAt(0);
+		if (major && key > 90) key = (char)(key-32);
+		if (!major && key < 96) key = (char)(key+32);
 		if (name.length() > 1)
 			this.type = name.charAt(1);
 		else this.type = 'n';
@@ -23,7 +23,6 @@ public class KeySignature {
 	public String get_maj_min() { return (major ? "maj" : "min"); }
 	
 	public String toString() {
-		String s = key + "" + (type != 'n' ? type : "") + (major ? " maj" : " min");
-		return s;
+		return key + (type != 'n' ? type + "" : "") + (major ? " maj" : " min");
 	}
 }

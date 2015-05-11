@@ -115,8 +115,10 @@ public class MidiHandler {
 //				buffer.print_history();
 //				System.out.println("Current overtone: " + Music.getNoteName(buffer.dom()));
 //				System.out.println();
-				String s= Analyzer.get_chord_context_free(buffer.hold_buffer, 0);
-				if (!s.equals("unknown")) System.out.println(s);
+//				String s= Analyzer.get_chord_context_free(buffer.hold_buffer, 0);
+//				if (!s.equals("unknown")) System.out.println(s);
+//				Analyzer.get_key_signature(buffer.key_analysis, buffer.curr_key);
+
 			}
 		}
 		

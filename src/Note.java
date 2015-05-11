@@ -128,6 +128,8 @@ public class Note implements Comparable<Note> {
 		}
 	}
 	
+	public String toString() { return Music.getNoteName(this); }
+	
 	class ReleaseTask extends TimerTask {
 		private Note pnote;
 		public ReleaseTask(Note n) {

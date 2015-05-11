@@ -36,7 +36,6 @@ public class AppCore {
 	
 	private int curr_tempo;
 	private Color p_color;
-	private Chord curr_chord;
 	private LinearGradientPaint l1, l2, l3;
 	private ArrayList<Integer> start, end, key;
 	private ArrayList<Color> histc;
@@ -168,27 +167,16 @@ public class AppCore {
 		
 		int nx = r_al + 40;
 		
-		if (parent.set.ksig != null) {
-			if (parent.set.ksig.get_type().equals("")) 
-				g.drawString(parent.set.ksig.get_base() + " " + parent.set.ksig.get_maj_min(), sX(nx), sY(194));
-			else {
-				g.drawString(parent.set.ksig.get_base(), sX(nx), sY(194));
-				int tmp = nx + fm.stringWidth(parent.set.ksig.get_base()) + sW(14);
-				g.setFont(new Font("Opus Text Std", Font.PLAIN, sH(45)));
-				g.drawString(parent.set.ksig.get_type(), sX(tmp), sY(194));
-				tmp += g.getFontMetrics().stringWidth(parent.set.ksig.get_type()) + sW(10);
-				g.setFont(anal_base);
-				g.drawString(" " + parent.set.ksig.get_maj_min(), sX(tmp), sY(194));
-			}
-		}
+		if (parent.set.ksig != null) draw_ksig(g, parent.set.ksig);
+		else if (nb.curr_key != null) draw_ksig(g, nb.curr_key);
+		else g.drawString("collecting data...", sX(nx), sY(194));
+		
 		if (parent.set.tempo != -1) g.drawString(parent.set.tempo + " bpm", sX(nx), sY(251.3));
 		else g.drawString(curr_tempo + " bpm", sX(nx), sY(251.3));
 		
 		if (parent.set.tsig != null) g.drawString(parent.set.tsig.getTS(), sX(nx), sY(308.3));
 		
-		Chord c = Analyzer.get_chord(nb.note_buffer, null);
-		if (c != null) curr_chord = c;
-		if (curr_chord != null) curr_chord.draw_roman(g, sX(1920/2), sY(288), sH(154));
+		if (nb.curr_chord != null) nb.curr_chord.draw_roman(g, sX(1920/2), sY(288), sH(154));
 		
 		g.setColor(new Color(129, 164, 207));
 		g.fillRect(sX(1320), sY(140), sW(600), sH(66));
@@ -197,6 +185,26 @@ public class AppCore {
 		g.setFont(anal_base);
 		fw = g.getFontMetrics().stringWidth("predicted chords");
 		g.drawString("predicted chords", sX(1320) + (sX(600)-fw)/2, sY(186));
+		g.setFont(new Font("Plantin MT Std", Font.PLAIN, 18));
+
+		g.drawString("DOM:" + Music.getNoteName(nb.dom()), sX(1320), sY(220));
+		g.drawString(nb.bass.toString(), sX(1320), sY(255));
+		g.drawString(nb.rel_buffer.toString(), sX(1320), sY(290));
+	}
+	
+	private void draw_ksig(Graphics2D g, KeySignature k) {
+		int nx = r_al + 40;
+		if (k.get_type().equals("")) 
+			g.drawString(k.get_base() + " " + k.get_maj_min(), sX(nx), sY(194));
+		else {
+			g.drawString(k.get_base(), sX(nx), sY(194));
+			int tmp = nx + g.getFontMetrics().stringWidth(k.get_base()) + sW(14);
+			g.setFont(new Font("Opus Text Std", Font.PLAIN, sH(45)));
+			g.drawString(k.get_type(), sX(tmp), sY(194));
+			tmp += g.getFontMetrics().stringWidth(k.get_type()) + sW(10);
+			g.setFont(anal_base);
+			g.drawString(" " + k.get_maj_min(), sX(tmp), sY(194));
+		}
 	}
 	
 	private void draw_history(Graphics2D g) {
@@ -298,7 +306,8 @@ public class AppCore {
 	
 	public void handle(KeyEvent e) {
 		switch (e.getKeyCode()) {
-			case KeyEvent.VK_ESCAPE: if (curr_state == 1) curr_state = 2;
+			case KeyEvent.VK_ESCAPE: case KeyEvent.VK_X: if (curr_state == 1) curr_state = 2; break;
+			case KeyEvent.VK_R: nb.reinit(); break;
 		}
 	}
 	
@@ -337,7 +346,7 @@ public class AppCore {
 				alpha2 = (short)(alpha2+dA > 255 ? 255: alpha2+dA);
 				theta += dT;
 				if (theta > 2*Math.PI) theta = (float)(-2*Math.PI);
-				if (alpha == 255) { parent.s_mn.re_init(0, 3); parent.set_state(Display.State.MENU); } 
+				if (alpha == 255) { parent.s_mn.re_init(0, 3); parent.set_state(Display.State.MENU); parent.play_bgm("menu_bgm.mp3"); } 
 				break;
 		}
 	}

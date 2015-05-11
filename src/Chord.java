@@ -111,7 +111,7 @@ public class Chord {
 				ret += susp + " _" + (susp-1);
 				break;
 			case 'C':
-				ret += "cadV6";
+				ret += "cadV64";
 				if (base != 1) ret += "/" + roman[base];
 				break;
 			default:
@@ -134,6 +134,10 @@ public class Chord {
 	
 	public byte[] get_notes(KeySignature k) {
 		return notes;
+	}
+	
+	public boolean is_chord_tone(Note n) {
+		return false;
 	}
 	
 	public void draw_roman(Graphics2D g, int x, int y, int size) {

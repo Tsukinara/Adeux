@@ -1,18 +1,56 @@
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 
 public class Analyzer {
+	private final static int[] maj_arr = {2, 4, 5, 7, 9, 11};
+	private final static int[] min_arr = {2, 3, 5, 7, 8, 11};
+	private final static int ret = 7;
 	
-	public static byte get_dominant_overtone(ArrayList<Note> buffer) {
-		return 0;
+	public static KeySignature get_key_signature(ArrayList<Note> history, KeySignature curr) {
+		int[] vals = new int[12];	
+		int[] top = new int[ret];
+		int[] hist = new int[history.size()];
+		for (Note n : history) vals[n.key()] += 1;
+		for (int i = 0; i < history.size(); i++) hist[i] = history.get(i).key();
+		for (int i = 0; i < ret; i++) {
+			int max = -1, mi = -1;
+			for (int j = 0; j < 12; j++) if (vals[j] > max && vals[j] > 0) { max = vals[j]; mi = j; }
+			if (mi >= 0) vals[mi] = -1;
+			top[i] = mi;
+		}
+		Arrays.sort(top); if (top[1] == -1) return null;
+		int base = -1; boolean maj = true;
+		for (int i = 0; i < ret; i++) {
+			int b = top[0]; boolean flag;
+			if (b != -1) {
+				flag = true;
+				for (int j : maj_arr) { if (!has(top, (b+j)%12)) flag = false; }
+				if (flag) { base = b; maj = true; } 
+				else {
+					flag = true;
+					for (int j : min_arr) if (!has(top, (b+j)%12)) flag = false;
+					if (flag) { base = b; maj = false; }
+				}
+			}
+			top = circ_shift(top);
+		}
+		if (base == -1 && history.size() < 10) return null;
+		if (base == -1) {
+			ArrayList<Note> new_list = new ArrayList<Note>();
+			new_list.addAll(history.subList(history.size()/2, history.size()));
+			return get_key_signature(new_list, curr);
+		}
+		if (curr != null) {
+			int curr_base = Music.getKey(curr.key + "" + curr.type);
+			if (curr_base == base + 7 && has(hist, (base+6)%12))
+				if (last_index_of(hist, (base+6)%12) > last_index_of(hist, (base+5)%12)) return curr;
+			if (curr_base == base + 6 && has(hist, (base+10)%12))
+				if (last_index_of(hist, (base+10)%12) > last_index_of(hist, (base+11)%12)) return curr;
+		}
+		return new KeySignature(Music.getSimplestKey(base), maj);
 	}
 	
-	public static byte get_dominant_overtone(ArrayList<Note> buffer, KeySignature k) {
-		return 0;
-	}
-	
-	public static KeySignature get_key_signature(ArrayList<Chord> history) {
+	public static KeySignature get_maj_min(KeySignature k, ArrayList<Chord> history) {
 		return null;
 	}
 	
@@ -65,7 +103,7 @@ public class Analyzer {
 		}
 	}
 	
-	public static int get_triad(Integer[] nk) {
+	private static int get_triad(Integer[] nk) {
 		if (nk.length != 3) return -1;
 		for (int i = 0; i < 3; i++) {
 			if (has(nk, (nk[0]+4)%12) && has(nk, (nk[0]+7)%12)) return i*3 + 0;
@@ -76,7 +114,7 @@ public class Analyzer {
 		return -1;
 	}
 	
-	public static int get_third(Integer[] nk) {
+	private static int get_third(Integer[] nk) {
 		if (nk.length != 2) return -1;
 		if ((nk[0]+4)%12 == nk[1]) return 0;
 		if ((nk[0]+3)%12 == nk[1]) return 1;
@@ -85,7 +123,7 @@ public class Analyzer {
 		return -1;
 	}
 	
-	public static int get_seventh(Integer[] nk) {
+	private static int get_seventh(Integer[] nk) {
 		int type = -20; //0-dom, 1-maj, 2-min, 3-dim 
 		int inv = 0;
 		if (nk.length != 3 && nk.length != 4) return -1;
@@ -111,31 +149,141 @@ public class Analyzer {
 			return -1;
 		}
 	}
-	
-	public static void print_arr(Integer[] in) { 
-		System.out.print("[" + in[0]);
-		for (int i = 1; i < in.length; i++) System.out.print(", " + in[i]);
-		System.out.println("]");
-	}
-	
+		
 	private static boolean has(Integer[]in, int k) { return Arrays.asList(in).contains(k); }
+	private static boolean has(int[] in, int k) { boolean f = false; for (int i : in) if (i == k) f = true; return f; }
+	private static int last_index_of(int[] in, int k) {
+		int ind = -1;
+		for (int i = in.length-1; i >= 0; i--) if (in[i] == k) { ind = i; break; }
+		return ind;
+	}
 	
 	private static Integer[] circ_shift(Integer[] in) {
 		Integer[] out = new Integer[in.length];
-		for (int i = 1; i < in.length; i++)
-			out[i-1] = in[i];
-		out[in.length-1] = in[0];
-		return out;
+		for (int i = 1; i < in.length; i++) out[i-1] = in[i];
+		out[in.length-1] = in[0]; return out;
 	}
 	
-	public static Chord get_chord(ArrayList<Note> rel, KeySignature key) {
-		Collections.sort(rel);
+	private static int[] circ_shift(int[] in) {
+		int[] out = new int[in.length];
+		for (int i = 1; i < in.length; i++) out[i-1] = in[i];
+		out[in.length-1] = in[0]; return out;
+	}
+	
+	public static Chord get_chord(ArrayList<Note> rel, ArrayList<Note> all, byte dom, KeySignature key, Chord curr) {
 		if (rel.size() == 0) return null;
-		int dom = rel.get(0).key();
+		if (key == null) return null;
+		if (key.major) return get_major_chord(rel, all, dom, key, curr);
+		else return get_minor_chord(rel, all, dom, key, curr);
+	}
+	
+	private static Chord get_major_chord(ArrayList<Note> rel, ArrayList<Note> all, byte dom, KeySignature k, Chord curr) {
+		int kkey = Music.getKey(k.key + "" + k.type);
+		int d = (Music.keyOf(dom) - kkey + 12)%12;
 		ArrayList<Integer> keys = new ArrayList<Integer>();
+		ArrayList<Integer> alls = new ArrayList<Integer>();
+		for (Note n : all) alls.add((n.key() - kkey + 12)%12);
+		for (Note n : rel) keys.add((n.key() - kkey + 12)%12);
+		String c = "";
+		switch (d) {
+			case 0: // C
+				if (alls.contains(8)) c = "4-120m";
+				else if (keys.contains(2) && (keys.contains(4) || keys.contains(7)) && super_relevant(rel, 2, kkey)) c = "S1-20M";
+				else if (keys.contains(5) && super_relevant(rel, 5, kkey)) c = "S1-40M";
+				else if (keys.contains(4) && alls.contains(10)) c = "F4-07M";
+				else if (alls.contains(6)) c = "F5-37M";
+				else if (keys.contains(2) && keys.contains(5)) c = "2-137m";
+				else if (keys.contains(5) && keys.contains(9)) if (keys.contains(4)) c = "4-127M"; else c = "4-120M";
+				else if (keys.contains(9) && keys.contains(7)) c = "6-117m";
+				else if (keys.contains(9) && keys.contains(4)) c = "6-110m";
+				else c = "1-100M";
+				break;
+			case 1: // C#
+				if (keys.contains(7)) c = "F2-17m";	else c = "F2-10m"; break;
+			case 2: // D
+				break;
+			case 3: // Eb / D#
+				if (keys.contains(11) || alls.contains(6)) {
+					if (keys.contains(9)) c = "F3-17m"; else c = "F3-10m";
+				} else c = "3-000M";
+				break;
+			case 4: // E
+				break;
+			case 5: // F
+				if (keys.contains(7) && keys.contains(11)) c = "5-137M";
+				else if (keys.contains(11) && !keys.contains(0)) { if (alls.contains(8)) c = "7-127d"; else c = "7-120d"; }
+				else if (keys.contains(8) && keys.contains(2) && !keys.contains(0)) c = "2-107d";
+				else if (alls.contains(8)) { if (keys.contains(4)) c = "4-107m"; else c = "4-100m"; }
+				else if (keys.contains(11) && super_relevant(rel, 11, kkey)) { if (keys.contains(4)) c = "S4-47M"; else c = "S4-40M"; }
+				else if (keys.contains(7) && super_relevant(rel, 7, kkey)) { if (keys.contains(4)) c = "S4-27M"; else c = "S4-20M"; }
+				else if (keys.contains(2) && super_relevant(rel, 2, kkey)) { if (keys.contains(0)) c = "2-117m"; else c = "2-110m"; }
+				else if (keys.contains(4) && keys.contains(9)) c = "4-107M";
+				else c = "4-100M";
+				break;
+			case 6: // F#
+				if ((keys.contains(11) || alls.contains(3)) && alls.contains(9)) c = "F3-27m";
+				else if (keys.contains(0)) c = "F5-17M"; else c = "F5-10M";
+				break;
+			case 7: // G
+				if (keys.contains(0) && keys.contains(4) && super_relevant(rel, 0, kkey) && super_relevant(rel, 4, kkey) && !keys.contains(11)) c = "CAD64-1";
+				else if (keys.contains(0) && super_relevant(rel, 0, kkey)) { if (keys.contains(5)) c = "S5-47M"; else c = "S5-40M"; }
+				else if (keys.contains(9) && super_relevant(rel, 9, kkey)) { if (keys.contains(5)) c = "S5-27M"; else c = "S5-20M"; }
+				else if (keys.contains(10) && keys.contains(0)) c = "F4-27M";
+				else if (alls.contains(1)) c = "F2-37m";
+				else if (keys.contains(5)) c = "5-107M"; 
+				else if (keys.contains(4) && super_relevant(rel, 4, kkey)) { if (keys.contains(2)) c = "3-117m"; else c = "3-110m"; }
+				else if (keys.contains(9) && keys.contains(0) && super_relevant(rel, 9, kkey)) c = "6-137m";
+				else c = "5-100M";
+				break;
+			case 8: // G# / Ab
+				if (keys.contains(5) && keys.contains(0)) { if (keys.contains(4)) c = "4-117m"; else c = "4-110m"; }
+				else if (alls.contains(3)) { if (keys.contains(7)) c = "6-007M"; else c = "6-000M"; }
+				else if (keys.contains(11) && keys.contains(5)) c = "7-137d";
+				else if (keys.contains(4) && keys.contains(2)) c = "F6-17m"; 
+				else if (keys.contains(0)) { if (keys.contains(4)) c = "4-117m"; else c = "4-110m"; }
+				else c = "F6-10m";
+				break;
+			case 9: // A
+				break;
+			case 10: // Bb
+				if (alls.contains(0) && keys.contains(4)) c = "F4-37M"; else c = "7-000M"; break;
+			case 11: // B
+				if (keys.contains(7) && keys.contains(5)) { c = "5-117M"; break; }
+				if (keys.contains(4) && keys.contains(7)) { 
+					if (keys.contains(2)) { c = "3-127m"; break; }
+					else {
+						Note tmp = null, bass = rel.get(0); 
+						for (Note n : rel) { if (n.key() == (kkey+4)%12) tmp = n; }
+						if (tmp != null && Math.abs(tmp.get_start() - bass.get_start()) < NoteBuffer.same_thresh) { c = "3-120m"; break; }
+					}
+				}
+				if (keys.contains(2) && keys.contains(5)) { if (keys.contains(8)) c = "7-107d"; else c = "7-100d"; }
+				else if (alls.contains(8) && keys.contains(4)) { if (keys.contains(2)) c = "F6-27m"; else c = "F6-20m"; }
+				else if (keys.contains(8)) c = "7-107d";
+				else if (alls.contains(3)) { if (keys.contains(9)) c = "F3-07m"; else c = "F3-00m"; }
+				else c = "5-110M";
+				break;
+		}
+		return new Chord(c);
+	}
+	
+	private static boolean super_relevant(ArrayList<Note> rels, int ind, int kkey) {
+		Note bass = rels.get(0);
+		ArrayList<Note> tmp = new ArrayList<Note>();
+		for (Note n : rels) { if (n.key() == (kkey + ind)%12) tmp.add(n); }
+		boolean flag = false;
+		for (Note n : tmp) if (Math.abs(n.get_start() - bass.get_start()) < NoteBuffer.same_thresh) flag = true;
+		return flag;
+	}
+	
+	private static Chord get_minor_chord(ArrayList<Note> rel, ArrayList<Note> all, byte dom, KeySignature k, Chord curr) {
+		int d = Music.keyOf(dom);
+		ArrayList<Integer> keys = new ArrayList<Integer>();
+		ArrayList<Integer> alls = new ArrayList<Integer>();
+		for (Note n : all) alls.add(n.key());
 		for (Note n : rel) keys.add(n.key());
 		String c = "";
-		switch (dom) {
+		switch (d) {
 			case 0: 
 				if (keys.contains(4)) c = "F2-0" + (keys.contains(10)? "7" : "0") + "m";
 				else c = "6-10" + (keys.contains(10)? "7" : "0") + "m";
@@ -188,9 +336,6 @@ public class Analyzer {
 		return new Chord(c);
 	}
 	
-	public static Chord get_chord(ArrayList<Note> held, ArrayList<Chord> history, KeySignature key) {
-		return null;
-	}
 	
 	public static void main(String [] args) {
 		NoteBuffer nb = new NoteBuffer(null);

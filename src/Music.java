@@ -64,4 +64,46 @@ public class Music {
 		}
 		return name;
 	}
+	
+	public static String getSimplestKey(int key) {
+		String name = "";
+		switch(key) {
+			case 0: 	name = "A"; 	break;
+			case 1: 	name = "B" + f; break;
+			case 2: 	name = "B"; 	break;
+			case 3: 	name = "C"; 	break;
+			case 4: 	name = "D" + f; break;
+			case 5: 	name = "D"; 	break;
+			case 6: 	name = "E" + f; break;
+			case 7: 	name = "E"; 	break;
+			case 8: 	name = "F"; 	break;
+			case 9: 	name = "F" + s; break;
+			case 10: 	name = "G"; 	break;
+			case 11: 	name = "A" + f; break;
+		}
+		return name;
+	}
+	
+	public static int getKey(String name) {
+		char k = name.toUpperCase().charAt(0);
+		char t = (name.length() > 1 ? name.charAt(1) : 'n');
+		int ret = 0;
+		switch(k) {
+			case 'A': ret = 0; break;
+			case 'B': ret = 2; break;
+			case 'C': ret = 3; break;
+			case 'D': ret = 5; break;
+			case 'E': ret = 7; break;
+			case 'F': ret = 8; break;
+			case 'G': ret = 10; break;
+		}
+		if (t == 'b') return (ret+11)%12;
+		if (t == 'n') return ret;
+		if (t == '#') return ret+1;
+		return -1;
+	}
+
+	public static int keyOf(byte id) {
+		return ((int)id - 21) % 12;
+	}
 }
