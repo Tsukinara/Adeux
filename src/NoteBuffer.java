@@ -5,6 +5,7 @@ public class NoteBuffer {
 	private static final int key_track = 10;
 	public static final int same_thresh = 50000;
 	public static final int tril_thresh = 500000;
+	public static final int chord_thresh = 700000;
 	private static final int poly = 10;
 	private static final int bass_dist = 16;
 	
@@ -19,10 +20,13 @@ public class NoteBuffer {
 	public ArrayList<Note> all_buffer;
 	public ArrayList<Note> history;
 	public ArrayList<Note> key_analysis;
+	public int curr_tempo;
 	
 	//contains all notes within 1.5 octaves of the dominant overtone
 	protected ArrayList<Note> bass;
 	private ArrayList<Note> marks;
+	protected ArrayList<Chord> chord_history;
+	private ArrayList<Long> chord_history_t;
 
 	
 	private byte dominant;
@@ -37,16 +41,7 @@ public class NoteBuffer {
 	 */
 	public NoteBuffer(Display parent) {
 		this.parent = parent;
-		this.note_buffer = new ArrayList<Note>();
-		this.hold_buffer = new ArrayList<Note>();
-		this.rel_buffer = new ArrayList<Note>();
-		this.all_buffer = new ArrayList<Note>();
-		this.history = new ArrayList<Note>();
-		this.marks = new ArrayList<Note>();
-		this.damped = false;
-		this.bass = new ArrayList<Note>();
-		this.key_analysis = new ArrayList<Note>();
-		this.dominant = -1;
+		reinit();
 	}
 	
 	public void reinit() {
@@ -57,9 +52,12 @@ public class NoteBuffer {
 		this.history = new ArrayList<Note>();
 		this.marks = new ArrayList<Note>();
 		this.damped = false;
+		this.chord_history = new ArrayList<Chord>();
+		this.chord_history_t = new ArrayList<Long>();
 		this.bass = new ArrayList<Note>();
 		this.key_analysis = new ArrayList<Note>();
 		this.dominant = -1;
+		this.curr_tempo = -1;
 	}
 	
 	/*
@@ -92,7 +90,7 @@ public class NoteBuffer {
 		add_akey(n);
 		
 		if (parent != null) parent.note_pressed(id, vel, time);
-		recalculate();
+		recalculate(time);
 	}
 	
 	public synchronized void change_dom(Note nt) {
@@ -121,20 +119,45 @@ public class NoteBuffer {
 	private synchronized void analyze_dominant(Note n) {
 		if (dominant == -1) change_dom(n);
 		else if (n.id() < dominant) change_dom(n);
+		else if (Math.abs(n.id() - dominant) < 12) {
+			int kkey = Music.getKey(curr_key.key + "" + curr_key.type);
+			int po = (n.key() - kkey + 12)%12;
+			if (curr_chord == null) change_dom(n);
+			else if (!curr_chord.is_chord_tone(po) && n.id() < min_id(note_buffer)) change_dom(n);
+		}
 	}
 	
 	private boolean same_time(Note a, Note b) {
 		return Math.abs(a.get_start() - b.get_start()) < same_thresh;
 	}
 	
-	private void recalculate() {
+	private void recalculate(long timeStamp) {
 		if (parent.set.ksig == null) {
 			KeySignature k = Analyzer.get_key_signature(key_analysis, this.curr_key);
 			System.out.println((k!= null ? k.toString() : "unknown"));
 			if (k != null) this.curr_key = k;
 		} else this.curr_key = parent.set.ksig;
+		String prev_chord = (curr_chord != null ? curr_chord.code : "");
 		Chord c = Analyzer.get_chord(rel_buffer, all_buffer, dominant, curr_key, curr_chord);
 		if (c != null) this.curr_chord = c;
+		if (curr_chord != null && !prev_chord.equals(curr_chord.code)) {
+			chord_history.add(curr_chord);
+			chord_history_t.add(timeStamp);
+		}
+		filter_chord_history();
+	}
+	
+	private void filter_chord_history() {
+		ArrayList<Integer> tmp = new ArrayList<Integer>();
+		for (int i = 1; i < chord_history.size(); i++) {
+			long t1 = chord_history_t.get(i-1);
+			long t2 = chord_history_t.get(i);
+			if (Math.abs(t2 - t1) < chord_thresh) tmp.add(i-1);
+		}
+		for (Integer i : tmp) {
+			chord_history.remove((int)i);
+			chord_history_t.remove((int)i);
+		}
 	}
 	
 	private synchronized void add_akey(Note n) {
@@ -147,6 +170,13 @@ public class NoteBuffer {
 		}
 		for (Note nt : tmp) key_analysis.remove(nt);
 	}
+	
+	private synchronized int min_id(ArrayList<Note> n) {
+		int min = 999;
+		for (Note nt : n) if (nt.id() < min) min = nt.id();
+		return min;
+	}
+	
 	/*
 	 * Releases a note from the hold buffer. If the damper is not down, the note is undamped
 	 * as well. Otherwise, it remains in the note buffer.
@@ -161,7 +191,7 @@ public class NoteBuffer {
 			tmp.release(time, damped);
 		}
 		if (parent != null) parent.note_released(id, time);
-		recalculate();
+		recalculate(time);
 	}
 	
 	/*
@@ -190,7 +220,7 @@ public class NoteBuffer {
 			}
 		}
 		if (new_dom != null && Math.abs(dominant - new_dom.id()) < 12) change_dom(new_dom);
-		recalculate();
+		recalculate(time);
 	}
 	
 	public synchronized void damp(long time) {
@@ -205,7 +235,7 @@ public class NoteBuffer {
 		}
 		if (new_dom != null) change_dom(new_dom);
 		if (parent != null) parent.damp_pressed(time);
-		recalculate();
+		recalculate(time);
 	}
 	
 	public byte dom() { return this.dominant; }

@@ -1,5 +1,6 @@
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.util.Arrays;
 
 public class Chord {
 	private static final String[] roman = {"", "I", "II", "III", "IV", "V", "VI", "VII"};
@@ -7,9 +8,10 @@ public class Chord {
 	private static final String[] invs3 = {"", "6", "64"};
 	private static final String[] invs7 = {"7", "65", "43", "\u00d1"};
 	private static final String[] quals = {"\u00ba", "\u00f8", "&"};
+	
 	public String name;
 	// inv: 0, 1, 2, or 3 for each respective inversion
-	// type: -1, 0, or 1 for flat, natural, or sharp
+	// type: 0, 1, or 2 for flat, natural, or sharp
 	// susp: 0, 2, or 4, depending on suspension
 	public byte inv, type, susp;
 	
@@ -53,8 +55,9 @@ public class Chord {
 	 * D: M or m, indicating major or minor suspension
 	 * 
 	 * SPECIAL
-	 * CAD64-A
+	 * CAD64-AB
 	 * A: number 1-7, indicating the position of the chord being resolved to
+	 * B: M or m, indicating major or minor of the A
 	 */
 	public Chord (String code) {
 		this.code = code;
@@ -78,8 +81,9 @@ public class Chord {
 					break;
 				case 'C':
 					this.base = Short.parseShort(code.charAt(6) + "");
+					this.qual = code.charAt(7);
 					this.inv = 0; this.type = 1; this.seven = false; // lot of assumptions
-					this.susp = 0; this.qual = 'M'; // assume cadential 6-4s are not suspended and major
+					this.susp = 0;// assume cadential 6-4s are not suspended and major
 					break;
 				default:
 					this.base = Short.parseShort(code.charAt(0) + "");
@@ -112,7 +116,7 @@ public class Chord {
 				break;
 			case 'C':
 				ret += "cadV64";
-				if (base != 1) ret += "/" + roman[base];
+				if (base != 1) ret += "/" + (qual == 'M' ? roman[base] : roman[base].toLowerCase());
 				break;
 			default:
 				ret += types[type];
@@ -136,9 +140,74 @@ public class Chord {
 		return notes;
 	}
 	
-	public boolean is_chord_tone(Note n) {
+	public int base_index() {
+		if (code.equals("")) return -1;
+		else switch (base) {
+			case 1: return (type - 1)%12;
+			case 2: return (2 + type - 1)%12;
+			case 3: return (4 + type - 1)%12;
+			case 4: return (5 + type - 1)%12;
+			case 5: return (7 + type - 1)%12;
+			case 6: return (9 + type - 1)%12;
+			case 7: return (11 + type - 1)%12;
+			default: return -1;
+		}
+	}
+	
+	public int get_seven() {
+		if (code.charAt(0) == 'C') return -1;
+		if (!seven) return -1;
+		else {
+			int root = base;
+			if (code.charAt(0) == 'F') root = (root+3)%7 + 1;
+			switch (root) {
+				case 1: if (code.charAt(0) == 'F') return 10; else return 11;
+				case 2: if (qual == 'd') return 11; else return 0;
+				case 3: return 2;
+				case 4: return 4;
+				case 5: return 5;
+				case 6: return 7;
+				case 7: return 8;
+				default: return -1;
+			}
+		}
+	}
+	
+	public int[] get_chord_tones() {
+		if (code.equals("")) return new int[0];
+		int ind = base_index();
+		switch (code.charAt(0)) {
+			case 'F': 
+				if (!seven) return new int[] { (ind+7)%12, (ind+2)%12, (ind+11)%12 };
+				else return new int[] { (ind+7)%12, (ind+2)%12, (ind+11)%12, get_seven() };
+			case 'S':
+
+			case 'C':
+			default: 
+				switch(qual) {
+					case 'd': 
+						if (!seven) return new int[] { ind, (ind+3)%12, (ind+6)%12 };
+						else return new int[] { ind, (ind+3)%12, (ind+6)%12, (ind+9)%12 };
+					case 'M':
+						if (!seven) return new int[] { ind, (ind+4)%12, (ind+7)%12 };
+						else return new int[] { ind, (ind+4)%12, (ind+7)%12, get_seven() };
+					case 'm':
+						if (!seven) return new int[] { ind, (ind+3)%12, (ind+7)%12 };
+						else return new int[] { ind, (ind+3)%12, (ind+7)%12, (ind+10)%12 };
+					case 'h': return new int[] { ind, (ind+3)%12, (ind+6)%12, (ind+10)%12 };
+					default: return new int[0];
+				}
+		}
+	}
+	
+	public boolean is_chord_tone(int index) {
+		if (code.equals("")) return false;
+		int[] cts = get_chord_tones();
+		if (has(cts, index)) return true;
 		return false;
 	}
+	
+	private static boolean has(int[] in, int k) { boolean f = false; for (int i : in) if (i == k) f = true; return f; }
 	
 	public void draw_roman(Graphics2D g, int x, int y, int size) {
 		g.setFont(new Font("Opus Chords Std", Font.PLAIN, size));
@@ -150,9 +219,13 @@ public class Chord {
 		
 	}
 	
+	public String toString() { return get_roman_name(); }
+	
 	public static void main(String [] args) {
-		Chord c = new Chord("5-017M");
-		System.out.println(c.code());
+		Chord c = new Chord("2-107d");
 		System.out.println(c.get_roman_name());
+		System.out.println(c.base_index());
+		System.out.println(Arrays.toString(c.get_chord_tones()));
+		System.out.println(c.is_chord_tone(3));
 	}
 }

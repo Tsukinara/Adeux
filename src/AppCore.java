@@ -34,27 +34,30 @@ public class AppCore {
 	private final static int w_lookup[] = { 1, 3, 4, 6, 8, 9, 11, 13, 15, 16, 18, 20, 21, 23, 25, 27, 28, 30, 32, 33, 35, 37, 39, 40, 42, 44, 45, 47, 49, 51, 52, 54, 56, 57, 59, 61, 63, 64, 66, 68, 69, 71, 73, 75, 76, 78, 80, 81, 83, 85, 87, 88 };
 	private final static int b_lookup[] = { 2, 5, 7, 10, 12, 14, 17, 19, 22, 24, 26, 29, 31, 34, 36, 38, 41, 43, 46, 48, 50, 53, 55, 58, 60, 62, 65, 67, 70, 72, 74, 77, 79, 82, 84, 86 };
 	
-	private int curr_tempo;
 	private Color p_color;
 	private LinearGradientPaint l1, l2, l3;
 	private ArrayList<Integer> start, end, key;
 	private ArrayList<Color> histc;
 	private short curr_state, alpha, alpha2, alpha3, bar_h1, bar_h2, bar_max, delay;
+	private short num_beats, beat, bcount;
 	private float theta;
 	private Display parent;
 	private boolean flag_analysis;
 	private NoteBuffer nb;
 	private double[] w_tl, w_tr, w_bl, w_br;
 	private double[] b_tl, b_tr, b_bl, b_br;
+	private Harmonizer synth;
 	private Font anal_base;
 	
 	public AppCore(Display parent) {
 		this.parent = parent;
+		this.synth = new Harmonizer("resources\\synthesis.dat");
 		init_values();
 	}
 	
 	public void init_values() {
-		this.curr_tempo = 138;
+		this.num_beats = (short)parent.set.tsig.num_beats();
+		this.beat = 0; this.bcount = 0;
 		this.start = new ArrayList<Integer>();
 		this.end = new ArrayList<Integer>();
 		this.key = new ArrayList<Integer>();
@@ -62,6 +65,7 @@ public class AppCore {
 		this.bar_h1 = 115; this.bar_h2 = 50; this.bar_max = 115;
 		this.delay = 300/20;	this.theta = (float)Math.PI;
 		this.curr_state = 0;
+		this.flag_analysis = false;
 		this.p_color = pedal_u;
 		this.w_tl = new double[52]; this.w_tr = new double[52];
 		this.w_bl = new double[52]; this.w_br = new double[52];
@@ -153,7 +157,7 @@ public class AppCore {
 		g.setFont(new Font("Plantin MT Std", Font.PLAIN, sH(52)));
 		int fw = g.getFontMetrics().stringWidth("awaiting music to begin analysis...");
 		g.drawString("awaiting music to begin analysis...", (sX(1920)-fw)/2, sY(240));
-		
+				
 		g.setColor(parent.bg_color);
 		g.setComposite(AlphaComposite.SrcOver.derive(1f - alpha3/255f));
 		g.setFont(anal_base);
@@ -165,14 +169,18 @@ public class AppCore {
 		fw = fm.stringWidth("meter:");
 		g.drawString("meter:", sX(r_al) - fw, sY(308.3));
 		
-		int nx = r_al + 40;
+		g.setColor(new Color(20, 42, 61, 190));
+		int w = 720/num_beats; int h = 10;
+		g.fillRect(sX(beat*w + 600), sY(anal_s-h), sW(w), sH(h));
 		
+		g.setColor(parent.bg_color);
+		int nx = r_al + 40;
 		if (parent.set.ksig != null) draw_ksig(g, parent.set.ksig);
 		else if (nb.curr_key != null) draw_ksig(g, nb.curr_key);
 		else g.drawString("collecting data...", sX(nx), sY(194));
 		
 		if (parent.set.tempo != -1) g.drawString(parent.set.tempo + " bpm", sX(nx), sY(251.3));
-		else g.drawString(curr_tempo + " bpm", sX(nx), sY(251.3));
+		else g.drawString(nb.curr_tempo + " bpm", sX(nx), sY(251.3));
 		
 		if (parent.set.tsig != null) g.drawString(parent.set.tsig.getTS(), sX(nx), sY(308.3));
 		
@@ -190,6 +198,7 @@ public class AppCore {
 		g.drawString("DOM:" + Music.getNoteName(nb.dom()), sX(1320), sY(220));
 		g.drawString(nb.bass.toString(), sX(1320), sY(255));
 		g.drawString(nb.rel_buffer.toString(), sX(1320), sY(290));
+		g.drawString(nb.chord_history.subList(nb.chord_history.size() - 10 < 0? 0: nb.chord_history.size() - 10, nb.chord_history.size()).toString(), sX(1320), sY(325));
 	}
 	
 	private void draw_ksig(Graphics2D g, KeySignature k) {
@@ -325,10 +334,28 @@ public class AppCore {
 		}
 	}
 	
-	public void step() {
-		if (Math.random() < 0.1) {
-			curr_tempo = (int)((10*Math.random()-5)+140);
+	private void adjust_tempo() {
+		bcount += 1;
+		int bpm = parent.set.tempo;
+		if (bpm == -1) bpm = nb.curr_tempo;
+		double spb = 60.0/(double)bpm;
+		double dpb = spb*1000/20;
+		if (bcount > dpb) {	bcount = 0;	beat = (short)((beat+1)%num_beats); }
+	}
+	
+	private void mellifluity() {
+		if (nb.curr_chord != null && nb.curr_key != null) {
+			synth.match_melody_to(nb.curr_chord);
+			int kkey = Music.getKey(nb.curr_key.key + "" + nb.curr_key.type);
+			int bpm = (parent.set.tempo == -1 ? nb.curr_tempo : parent.set.tempo);
+			double dpb = (60.0/(double)bpm)*1000/20;
+			double time = (beat+(double)bcount/dpb) * 12;;
+			synth.play_melody(time, kkey);
 		}
+	}
+	
+	public void step() {
+		adjust_tempo();
 		history_step();
 		pedal_color();
 		switch (curr_state) {
@@ -340,6 +367,7 @@ public class AppCore {
 				break;
 			case 1: // idle
 				if (flag_analysis) alpha3 = (short)(alpha3-dA < 0 ? 0 : alpha3-dA);
+				mellifluity();
 				break;
 			case 2: // transition out
 				alpha = (short)(alpha+dA > 255 ? 255: alpha+dA);

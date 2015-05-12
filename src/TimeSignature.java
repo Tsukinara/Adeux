@@ -75,4 +75,10 @@ public class TimeSignature {
 			default: hi = 0; lo = 0;
 		}
 	}
+	
+	public int num_beats() {
+		if (this.type.name().contains("SIMPLE")) return hi;
+		else if (this.type.name().contains("COMPOUND")) return hi/3;
+		else return 1;
+	}
 }

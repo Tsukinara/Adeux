@@ -201,6 +201,14 @@ public class Analyzer {
 			case 1: // C#
 				if (keys.contains(7)) c = "F2-17m";	else c = "F2-10m"; break;
 			case 2: // D
+				if (alls.contains(6)) { if (keys.contains(0)) c = "F5-07M"; else c = "F5-00M"; }
+				else if (keys.contains(7) && keys.contains(11) && super_relevant(rel, 7, kkey)) c = "CAD64-5M";
+				else if (keys.contains(7) && keys.contains(11) && curr.base == 6) c = "5-120M";
+				else if (keys.contains(11) && keys.contains(5)) { if (alls.contains(8)) c = "7-117d"; else c = "7-110d"; }
+				else if (alls.contains(8) && keys.contains(5)) c = "2-100d";
+				else if (alls.contains(8) && keys.contains(4)) c = "F6-37m";
+				else if (keys.contains(11) && keys.contains(5) && keys.contains(7)) c = "5-127M";
+				else if (keys.contains(0)) c = "2-107m"; else c = "2-100m";
 				break;
 			case 3: // Eb / D#
 				if (keys.contains(11) || alls.contains(6)) {
@@ -208,6 +216,16 @@ public class Analyzer {
 				} else c = "3-000M";
 				break;
 			case 4: // E
+				if (keys.contains(9) && keys.contains(0) && super_relevant(rel, 9, kkey)) c = "CAD64-6m";
+				else if (keys.contains(9) && keys.contains(0) && curr.base == 2) c = "6-120m";
+				else if (keys.contains(9) && keys.contains(7)) c = "6-127m";
+				else if (keys.contains(0)) c = "1-110M";
+				else if (alls.contains(8)) { if (keys.contains(2)) c = "F6-07m"; else c = "F6-00m"; }
+				else if (alls.contains(1)) { if (keys.contains(7)) c = "F2-27m"; else c = "F2-20m"; }
+				else if (alls.contains(10)) c = "F4-17M";
+				else if (keys.contains(5)) c = "4-137M";
+				else if (keys.contains(7) && keys.contains(2)) c = "3-107m";
+				else c = "3-100m";
 				break;
 			case 5: // F
 				if (keys.contains(7) && keys.contains(11)) c = "5-137M";
@@ -217,7 +235,7 @@ public class Analyzer {
 				else if (keys.contains(11) && super_relevant(rel, 11, kkey)) { if (keys.contains(4)) c = "S4-47M"; else c = "S4-40M"; }
 				else if (keys.contains(7) && super_relevant(rel, 7, kkey)) { if (keys.contains(4)) c = "S4-27M"; else c = "S4-20M"; }
 				else if (keys.contains(2) && super_relevant(rel, 2, kkey)) { if (keys.contains(0)) c = "2-117m"; else c = "2-110m"; }
-				else if (keys.contains(4) && keys.contains(9)) c = "4-107M";
+				else if (keys.contains(4)) c = "4-107M";
 				else c = "4-100M";
 				break;
 			case 6: // F#
@@ -225,10 +243,13 @@ public class Analyzer {
 				else if (keys.contains(0)) c = "F5-17M"; else c = "F5-10M";
 				break;
 			case 7: // G
-				if (keys.contains(0) && keys.contains(4) && super_relevant(rel, 0, kkey) && super_relevant(rel, 4, kkey) && !keys.contains(11)) c = "CAD64-1";
+				if (keys.contains(0) && keys.contains(4) && (curr.base == 6 || curr.code.equals("1-120m"))) c = "1-120M";
+				else if (keys.contains(0) && (keys.contains(4) || keys.contains(9)) && (curr.base == 6 || curr.code.equals("6-137m"))) c = "6-137m";
+				else if (keys.contains(0) && keys.contains(4) && super_relevant(rel, 0, kkey) && super_relevant(rel, 4, kkey) && !keys.contains(11)) c = "CAD64-1M";
 				else if (keys.contains(0) && super_relevant(rel, 0, kkey)) { if (keys.contains(5)) c = "S5-47M"; else c = "S5-40M"; }
 				else if (keys.contains(9) && super_relevant(rel, 9, kkey)) { if (keys.contains(5)) c = "S5-27M"; else c = "S5-20M"; }
-				else if (keys.contains(10) && keys.contains(0)) c = "F4-27M";
+				else if (alls.contains(10) && keys.contains(0)) c = "F4-27M";
+				else if (alls.contains(10)) c = "5-100m";
 				else if (alls.contains(1)) c = "F2-37m";
 				else if (keys.contains(5)) c = "5-107M"; 
 				else if (keys.contains(4) && super_relevant(rel, 4, kkey)) { if (keys.contains(2)) c = "3-117m"; else c = "3-110m"; }
@@ -244,6 +265,15 @@ public class Analyzer {
 				else c = "F6-10m";
 				break;
 			case 9: // A
+				if (keys.contains(2) && keys.contains(5) && (curr.is_chord_tone(10) || curr.code().equals("CAD64-2m"))) c = "CAD64-2m";
+				else if (keys.contains(2) && keys.contains(0) && keys.contains(5) && super_relevant(rel, 2, kkey)) c = "2-127m";
+				else if (keys.contains(2) && keys.contains(5) && super_relevant(rel, 2, kkey)) c = "2-120m";
+				else if (keys.contains(11) && super_relevant(rel, 11, kkey) && !keys.contains(5)) { if (keys.contains(7)) c = "S6-27m"; else c = "S6-20m"; }
+				else if (keys.contains(2) && super_relevant(rel, 2, kkey) && !keys.contains(5)) { if (keys.contains(7)) c = "S6-47m"; else c = "S6-40m"; }
+				else if (alls.contains(1)) { if (keys.contains(7)) c = "F2-07m"; else c = "F2-00m"; }
+				else if (alls.contains(6)) { if (keys.contains(0)) c = "F5-27M"; else c = "F5-20M"; }
+				else if (keys.contains(5)) { if (keys.contains(4)) c = "4-117M"; else c = "4-110M"; }
+				else if (keys.contains(7)) c = "6-107m"; else c = "6-100m";
 				break;
 			case 10: // Bb
 				if (alls.contains(0) && keys.contains(4)) c = "F4-37M"; else c = "7-000M"; break;
@@ -267,14 +297,7 @@ public class Analyzer {
 		return new Chord(c);
 	}
 	
-	private static boolean super_relevant(ArrayList<Note> rels, int ind, int kkey) {
-		Note bass = rels.get(0);
-		ArrayList<Note> tmp = new ArrayList<Note>();
-		for (Note n : rels) { if (n.key() == (kkey + ind)%12) tmp.add(n); }
-		boolean flag = false;
-		for (Note n : tmp) if (Math.abs(n.get_start() - bass.get_start()) < NoteBuffer.same_thresh) flag = true;
-		return flag;
-	}
+
 	
 	private static Chord get_minor_chord(ArrayList<Note> rel, ArrayList<Note> all, byte dom, KeySignature k, Chord curr) {
 		int d = Music.keyOf(dom);
@@ -334,6 +357,15 @@ public class Analyzer {
 				break;
 		}
 		return new Chord(c);
+	}
+	
+	private static boolean super_relevant(ArrayList<Note> rels, int ind, int kkey) {
+		Note bass = rels.get(0);
+		ArrayList<Note> tmp = new ArrayList<Note>();
+		for (Note n : rels) { if (n.key() == (kkey + ind)%12) tmp.add(n); }
+		boolean flag = false;
+		for (Note n : tmp) if (Math.abs(n.get_start() - bass.get_start()) < NoteBuffer.same_thresh) flag = true;
+		return flag;
 	}
 	
 	
