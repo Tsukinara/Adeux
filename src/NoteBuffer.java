@@ -27,7 +27,7 @@ public class NoteBuffer {
 	private ArrayList<Note> marks;
 	protected ArrayList<Chord> chord_history;
 	private ArrayList<Long> chord_history_t;
-
+	private int curr_index;
 	
 	private byte dominant;
 	private Display parent;
@@ -52,6 +52,7 @@ public class NoteBuffer {
 		this.history = new ArrayList<Note>();
 		this.marks = new ArrayList<Note>();
 		this.damped = false;
+		this.curr_index = -1;
 		this.chord_history = new ArrayList<Chord>();
 		this.chord_history_t = new ArrayList<Long>();
 		this.bass = new ArrayList<Note>();
@@ -145,6 +146,10 @@ public class NoteBuffer {
 			chord_history_t.add(timeStamp);
 		}
 		filter_chord_history();
+		if (chord_history.size() - 2 >= 0 && chord_history.size() - 2 > curr_index) {
+			curr_index = chord_history.size() - 2;
+			parent.profile().add_chord(chord_history.get(curr_index), chord_history.get(curr_index+1));
+		}
 	}
 	
 	private void filter_chord_history() {

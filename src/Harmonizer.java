@@ -18,6 +18,7 @@ public class Harmonizer {
 	private Receiver midiReceiver;
 	private static final int std_vel = 127;
 	private Melody curr_melody;
+	private Melody bass_melody;
 	private ArrayList<Integer> curr_held;
 	
 	public HashMap<Integer, ArrayList<Melody>> melodies;
@@ -53,16 +54,21 @@ public class Harmonizer {
 	public void match_melody_to(Chord c, int[]nexts) {
 		int root_ind = c.equvalent_base();
 		if (melodies.containsKey(root_ind)) {
-			ArrayList<Melody> candidates = melodies.get(root_ind);
-			if (candidates.size() == 0) { System.err.println("Unable to find harmony for: " + c.toString()); return; }
+			ArrayList<Melody> t_cs = melodies.get(root_ind);
+			ArrayList<Melody> b_cs = new ArrayList<Melody>();
+			if (t_cs.size() == 0) { System.err.println("Unable to find harmony for: " + c.toString()); return; }
+			for (int i = 0; i < t_cs.size(); i++) 
+				if (t_cs.get(i).type == Melody.Type.BASS) b_cs.add(t_cs.remove(i--));
+			
+			this.bass_melody = b_cs.get((int)(Math.random() * b_cs.size()));
 			ArrayList<Melody> finals = new ArrayList<Melody>();
 			for (int i : nexts) {
-				for (Melody m : candidates) if (m.next_index == i) finals.add(m);
+				for (Melody m : t_cs) if (m.next_index == i) finals.add(m);
 			}
 			if (finals.size() == 0) {
 				System.err.println("Unable to find perfect harmony. Using arbitrary harmony.");
-				int index = (int)(Math.random() * candidates.size());
-				this.curr_melody = candidates.get(index);
+				int index = (int)(Math.random() * t_cs.size());
+				this.curr_melody = t_cs.get(index);
 			} else {
 				int index = (int)(Math.random() * finals.size());
 				this.curr_melody = finals.get(index);
@@ -73,19 +79,25 @@ public class Harmonizer {
 	}
 	
 	public void play_melody(double time, int kkey) {
-		int base;
-		if (curr_melody.type == Melody.Type.TREBLE) base = treble_base;
-		else base = bass_base;
-		
+		int[] bnotes = bass_melody.get_held_notes(time);
 		int[] notes = curr_melody.get_held_notes(time);
 		for (int i : notes)
 			if (!curr_held.contains(i)) {
-				play_note(i + base + kkey, std_vel);
+				play_note(i + treble_base + kkey, std_vel);
+				curr_held.add(i);
+			}
+		for (int i : bnotes)
+			if (!curr_held.contains(i)) {
+				play_note(i + bass_base + kkey, std_vel);
 				curr_held.add(i);
 			}
 		for (int i = 0; i < curr_held.size(); i++) {
 			if (!has(notes, (int)curr_held.get(i))) {
-				stop_note(curr_held.get(i) + base + kkey, 0);
+				stop_note(curr_held.get(i) + treble_base + kkey, 0);
+				curr_held.remove(i);
+			}
+			if (!has(bnotes, (int)curr_held.get(i))) {
+				stop_note(curr_held.get(i) + bass_base + kkey, 0);
 				curr_held.remove(i);
 			}
 		}

@@ -32,6 +32,7 @@ public class Profile {
 	}
 	
 	public void add_chord(Chord in, Chord out) {
+		System.err.println("ADDING TO PROFILE: " + in + " --> " + out);
 		if (!map.containsKey(in.code())) {
 			HashMap<String, Integer> nC = new HashMap<String, Integer>();
 			nC.put(out.code(), 1);

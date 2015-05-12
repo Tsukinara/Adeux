@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 public class Analyzer {
 	private final static int[] maj_arr = {2, 4, 5, 7, 9, 11};
@@ -167,10 +168,19 @@ public class Analyzer {
 		out[in.length-1] = in[0]; return out;
 	}
 	
-	public static int get_tempo(ArrayList<Long> chord_history_t, int num_beats) {
+	public static int get_tempo(ArrayList<Long> chord_history_t, int num_beats, int curr_tempo) {
+		if (chord_history_t.size() < 3) return -1;
+		int avg_of = 3;
+		ArrayList<Long> rel_t = new ArrayList<Long>();
+		if (chord_history_t.size() > avg_of)
+			for (int i = chord_history_t.size() - avg_of; i < chord_history_t.size(); i++)
+				rel_t.add(chord_history_t.get(i));
+		else for (int i = 0; i < chord_history_t.size(); i++)
+			rel_t.add(chord_history_t.get(i));
+		
 		ArrayList<Long> times = new ArrayList<Long>();
-		for (int i = 1; i < chord_history_t.size() - 1; i++)
-			times.add(chord_history_t.get(i) - chord_history_t.get(i-1));
+		for (int i = 1; i < rel_t.size() - 1; i++)
+			times.add(rel_t.get(i) - rel_t.get(i-1));
 		Collections.sort(times);
 		return 140;
 	}
