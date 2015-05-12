@@ -144,10 +144,11 @@ public class NoteBuffer {
 		if (curr_chord != null && !prev_chord.equals(curr_chord.code)) {
 			chord_history.add(curr_chord);
 			chord_history_t.add(timeStamp);
+			parent.s_ac.chord_changed();
 		}
 		filter_chord_history();
-		if (chord_history.size() - 2 >= 0 && chord_history.size() - 2 > curr_index) {
-			curr_index = chord_history.size() - 2;
+		if (chord_history.size() - 3 >= 0 && chord_history.size() - 3 > curr_index) {
+			curr_index = chord_history.size() - 3;
 			parent.profile().add_chord(chord_history.get(curr_index), chord_history.get(curr_index+1));
 		}
 	}

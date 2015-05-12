@@ -9,7 +9,6 @@ import java.awt.event.KeyEvent;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Set;
 
 public class AppCore {
 	private final static short dA = 5, dL = 4, vel_thresh = 1;
@@ -26,8 +25,11 @@ public class AppCore {
 	private final static Color pian_b = new Color(198, 226, 240);
 	private final static Color line_a = new Color(26, 26, 26, 25);
 	private final static Color hold_wr = new Color(103, 157, 190);
+	private final static Color harm_wr = new Color(125, 187, 130);
 	private final static Color hold_wrb = new Color(65, 121, 155);
+	private final static Color harm_wrb = new Color(76, 146, 82);
 	private final static Color hold_br = new Color(55, 96, 146);
+	private final static Color harm_br = new Color(65, 136, 69);
 	private final static Color pedal_u = new Color(122, 180, 208);
 	private final static Color pedal_d = new Color(88, 141, 167);
 	private final static int w_lookup[] = { 1, 3, 4, 6, 8, 9, 11, 13, 15, 16, 18, 20, 21, 23, 25, 27, 28, 30, 32, 33, 35, 37, 39, 40, 42, 44, 45, 47, 49, 51, 52, 54, 56, 57, 59, 61, 63, 64, 66, 68, 69, 71, 73, 75, 76, 78, 80, 81, 83, 85, 87, 88 };
@@ -48,14 +50,18 @@ public class AppCore {
 	private double[] b_tl, b_tr, b_bl, b_br;
 	private Harmonizer synth;
 	private Font anal_base;
+	private int kkey;
+	boolean harm;
 	
 	public AppCore(Display parent) {
 		this.parent = parent;
-		this.synth = new Harmonizer("resources\\synthesis.dat");
+		this.synth = new Harmonizer(this, "resources\\synthesis.dat");
 		init_values();
 	}
 	
 	public void init_values() {
+		this.kkey = -999;
+		this.harm = false;
 		this.num_beats = (short)parent.set.tsig.num_beats();
 		this.beat = 0; this.bcount = 0;
 		this.start = new ArrayList<Integer>();
@@ -194,12 +200,31 @@ public class AppCore {
 		fw = g.getFontMetrics().stringWidth("predicted chords");
 		g.drawString("predicted chords", sX(1320) + (sX(600)-fw)/2, sY(186));
 		
-		// TODO : draw next chords
-		g.setFont(new Font("Plantin MT Std", Font.PLAIN, 18));
-		g.drawString("DOM:" + Music.getNoteName(nb.dom()), sX(1320), sY(220));
-		g.drawString(nb.bass.toString(), sX(1320), sY(255));
-		g.drawString(nb.rel_buffer.toString(), sX(1320), sY(290));
-		g.drawString(nb.chord_history.subList(nb.chord_history.size() - 10 < 0? 0: nb.chord_history.size() - 10, nb.chord_history.size()).toString(), sX(1320), sY(325));
+		if (next_chords != null) {
+			System.out.println(next_chords.toString());
+			int i = 1;
+			System.out.println(next_chords.keySet());
+			for (Chord c : next_chords.keySet()) {
+				g.setColor(parent.bg_color);
+				int x = 1320 + i*600/4;
+				c.draw_roman(g, sX(x), sY(265), sH(52));
+				i = i+1;
+				
+				g.setFont(new Font("Plantin MT Std", Font.PLAIN, sH(44)));
+				g.setColor(new Color(54, 88, 108));
+				String prob = (int)(100.0*next_chords.get(c)) + "%";
+				fw = g.getFontMetrics().stringWidth(prob);
+				g.drawString(prob, sX(x)-fw/2, sY(325));
+				
+				if (i > 3) break;
+			}
+		}
+
+//		g.setFont(new Font("Plantin MT Std", Font.PLAIN, 18));
+//		g.drawString("DOM:" + Music.getNoteName(nb.dom()), sX(1320), sY(220));
+//		g.drawString(nb.bass.toString(), sX(1320), sY(255));
+//		g.drawString(nb.rel_buffer.toString(), sX(1320), sY(290));
+//		g.drawString(nb.chord_history.subList(nb.chord_history.size() - 10 < 0? 0: nb.chord_history.size() - 10, nb.chord_history.size()).toString(), sX(1320), sY(325));
 	}
 	
 	private void draw_ksig(Graphics2D g, KeySignature k) {
@@ -248,10 +273,12 @@ public class AppCore {
 			double[] u = { w_bl[i], w_br[i], w_br[i], w_bl[i] };	double[] v = { wby, wby, wly, wly };
 			
 			if (nb.is_held(w_index(i))) g.setColor(hold_wr);
+			else if (synth.is_held(w_index(i), kkey)) g.setColor(harm_wr);
 			else g.setColor(Color.WHITE);
 			g.fillPolygon(sX(x), sY(y), 4);
 			
 			if (nb.is_held(w_index(i))) g.setColor(hold_wrb);
+			else if (synth.is_held(w_index(i), kkey)) g.setColor(harm_wrb);
 			else g.setColor(new Color(230, 230, 230));
 			g.fillPolygon(sX(u), sY(v), 4);
 			
@@ -265,6 +292,7 @@ public class AppCore {
 			double[] x = { b_tl[i], b_tr[i], b_br[i], b_bl[i] };
 			double[] y = { wty, wty, bly, bly };
 			if (nb.is_held(b_index(i))) g.setColor(hold_br);
+			else if (synth.is_held(b_index(i), kkey)) g.setColor(harm_br);
 			else g.setColor(parent.bg_color);
 			g.fillPolygon(sX(x), sY(y), 4);
 			
@@ -323,9 +351,6 @@ public class AppCore {
 	}
 	
 	private void history_step() {
-		int kkey;
-		if (nb.curr_key != null) kkey = Music.getKey(nb.curr_key.key + "" + nb.curr_key.type);
-		else kkey = -999;
 		for (int i = 0; i < start.size(); i++) {
 			if (!(nb.is_held(key.get(i)) && start.get(i) == wty))
 				if (!(synth.is_held(key.get(i), kkey) && start.get(i) == wty))
@@ -351,14 +376,13 @@ public class AppCore {
 	
 	private void mellifluity() {
 		if (nb.curr_chord != null && nb.curr_key != null) {
-			Set<Chord> tmp = parent.profile().next_chords(nb.curr_chord, 1).keySet();
-			Chord next = new Chord("1-100M");	for (Chord c : tmp) next = c;
-			synth.match_melody_to(nb.curr_chord, next.get_chord_tones());
-			int kkey = Music.getKey(nb.curr_key.key + "" + nb.curr_key.type);
+//			Set<Chord> tmp = parent.profile().next_chords(nb.curr_chord, 1).keySet();
+//			Chord next = new Chord("1-100M");	for (Chord c : tmp) next = c;
+			synth.match_melody_to(nb.curr_chord, new int[0]);
 			int bpm = (parent.set.tempo == -1 ? nb.curr_tempo : parent.set.tempo);
 			double dpb = (60.0/(double)bpm)*1000/20;
-			double time = (beat+(double)bcount/dpb) * 12;;
-			synth.play_melody(time, kkey);
+			double time = (beat+(double)bcount/dpb) * 12;
+			if (harm) synth.play_melody(time, kkey);
 		}
 	}
 	
@@ -371,6 +395,7 @@ public class AppCore {
 	public void step() {
 		adjust_tempo();
 		pedal_color();
+		kkey = (nb.curr_key == null? -999 : Music.getKey(nb.curr_key.key + "" + nb.curr_key.type));
 		switch (curr_state) {
 			case 0: // transition in;
 				alpha2 = (short)(alpha2-dA < 0 ? 0 : alpha2-dA);
