@@ -1,6 +1,6 @@
 % format:
-% ABTSQ-C : (DOL-E)(DOL-E)(DOL-E)...etc
-% A - root of current chord (1-7)
+% A-BTSQ-C : (DOL-E)(DOL-E)(DOL-E)...etc
+% A - index of root of harmonization chord (0-11)
 % B - 0 or 7, if the chord is a seventh
 % T - D, T, or Q for duple, triple, or quadruple time
 % S - B or T for bass or treble line
@@ -13,19 +13,19 @@
 %		each multiple of 6 is an eight note (assuming 4/4)
 %		each multiple of 3 is a sixteenth note
 %		each multiple of 4 is a triplet
-% F - note length, using same indexing system as above
+% L - note length, using same indexing system as above
 
 %% MAJOR HARMONIES
 % I chord
 
-10QTM-2 : (414-0)(014-4)(704-8)(414-12)(014-16)(704-20)(514-24)(014-28)(704-32)(414-36)(014-40)(704-44)
-10QTM-7 : (414-0)(014-4)(704-8)(414-12)(014-16)(704-20)(514-24)(014-28)(704-32)(414-36)(014-40)(514-44)
+0-0QTM-2 : (414-0)(014-4)(704-8)(414-12)(014-16)(704-20)(514-24)(014-28)(704-32)(414-36)(014-40)(704-44)
+0-0QTM-7 : (414-0)(014-4)(704-8)(414-12)(014-16)(704-20)(514-24)(014-28)(704-32)(414-36)(014-40)(514-44)
+0-0QTM-2 : ()
 
-
-10QBM-0 : 
+0-0QBM-0 : 
 
 % ii chord
-20QTm-0 : ()
+2-0QTm-0 : ()
 
 % iii chord
 
