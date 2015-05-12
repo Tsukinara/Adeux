@@ -8,6 +8,8 @@ import java.awt.LinearGradientPaint;
 import java.awt.event.KeyEvent;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
 
 public class AppCore {
 	private final static short dA = 5, dL = 4, vel_thresh = 1;
@@ -25,10 +27,7 @@ public class AppCore {
 	private final static Color line_a = new Color(26, 26, 26, 25);
 	private final static Color hold_wr = new Color(103, 157, 190);
 	private final static Color hold_wrb = new Color(65, 121, 155);
-	private final static Color hold_wl = Color.PINK;
-	private final static Color hold_wlb = Color.BLACK;
 	private final static Color hold_br = new Color(55, 96, 146);
-	private final static Color hold_bl = Color.CYAN;
 	private final static Color pedal_u = new Color(122, 180, 208);
 	private final static Color pedal_d = new Color(88, 141, 167);
 	private final static int w_lookup[] = { 1, 3, 4, 6, 8, 9, 11, 13, 15, 16, 18, 20, 21, 23, 25, 27, 28, 30, 32, 33, 35, 37, 39, 40, 42, 44, 45, 47, 49, 51, 52, 54, 56, 57, 59, 61, 63, 64, 66, 68, 69, 71, 73, 75, 76, 78, 80, 81, 83, 85, 87, 88 };
@@ -37,6 +36,7 @@ public class AppCore {
 	private Color p_color;
 	private LinearGradientPaint l1, l2, l3;
 	private ArrayList<Integer> start, end, key;
+	private HashMap<Chord, Double> next_chords;
 	private ArrayList<Color> histc;
 	private short curr_state, alpha, alpha2, alpha3, bar_h1, bar_h2, bar_max, delay;
 	private short num_beats, beat, bcount;
@@ -193,8 +193,9 @@ public class AppCore {
 		g.setFont(anal_base);
 		fw = g.getFontMetrics().stringWidth("predicted chords");
 		g.drawString("predicted chords", sX(1320) + (sX(600)-fw)/2, sY(186));
+		
+		// TODO : draw next chords
 		g.setFont(new Font("Plantin MT Std", Font.PLAIN, 18));
-
 		g.drawString("DOM:" + Music.getNoteName(nb.dom()), sX(1320), sY(220));
 		g.drawString(nb.bass.toString(), sX(1320), sY(255));
 		g.drawString(nb.rel_buffer.toString(), sX(1320), sY(290));
@@ -317,13 +318,18 @@ public class AppCore {
 		switch (e.getKeyCode()) {
 			case KeyEvent.VK_ESCAPE: case KeyEvent.VK_X: if (curr_state == 1) curr_state = 2; break;
 			case KeyEvent.VK_R: nb.reinit(); break;
+			case KeyEvent.VK_SPACE: flag_analysis = true;
 		}
 	}
 	
 	private void history_step() {
+		int kkey;
+		if (nb.curr_key != null) kkey = Music.getKey(nb.curr_key.key + "" + nb.curr_key.type);
+		else kkey = -999;
 		for (int i = 0; i < start.size(); i++) {
 			if (!(nb.is_held(key.get(i)) && start.get(i) == wty))
-				start.set(i, start.get(i) - dL);
+				if (!(synth.is_held(key.get(i), kkey) && start.get(i) == wty))
+					start.set(i, start.get(i) - dL);
 		}
 		for (int i = 0; i < end.size(); i++) end.set(i, end.get(i) - dL);
 		for (int i = 0; i < start.size(); i++) {
@@ -345,7 +351,9 @@ public class AppCore {
 	
 	private void mellifluity() {
 		if (nb.curr_chord != null && nb.curr_key != null) {
-			synth.match_melody_to(nb.curr_chord);
+			Set<Chord> tmp = parent.profile().next_chords(nb.curr_chord, 1).keySet();
+			Chord next = new Chord("1-100M");	for (Chord c : tmp) next = c;
+			synth.match_melody_to(nb.curr_chord, next.get_chord_tones());
 			int kkey = Music.getKey(nb.curr_key.key + "" + nb.curr_key.type);
 			int bpm = (parent.set.tempo == -1 ? nb.curr_tempo : parent.set.tempo);
 			double dpb = (60.0/(double)bpm)*1000/20;
@@ -354,9 +362,14 @@ public class AppCore {
 		}
 	}
 	
+	public void chord_changed() {
+		if (bcount < 8 && (beat == 2 || beat == 0)) bcount = 0;
+		else { beat = 0; bcount = 0; }
+		next_chords = parent.profile().next_chords(nb.curr_chord, 4);
+	}
+	
 	public void step() {
 		adjust_tempo();
-		history_step();
 		pedal_color();
 		switch (curr_state) {
 			case 0: // transition in;
@@ -367,14 +380,20 @@ public class AppCore {
 				break;
 			case 1: // idle
 				if (flag_analysis) alpha3 = (short)(alpha3-dA < 0 ? 0 : alpha3-dA);
-				mellifluity();
+				mellifluity(); 	history_step();
 				break;
 			case 2: // transition out
+				mellifluity(); 	history_step();
 				alpha = (short)(alpha+dA > 255 ? 255: alpha+dA);
 				alpha2 = (short)(alpha2+dA > 255 ? 255: alpha2+dA);
 				theta += dT;
 				if (theta > 2*Math.PI) theta = (float)(-2*Math.PI);
-				if (alpha == 255) { parent.s_mn.re_init(0, 3); parent.set_state(Display.State.MENU); parent.play_bgm("menu_bgm.mp3"); } 
+				if (alpha == 255) { 
+					parent.s_mn.re_init(0, 3); 
+					parent.set_state(Display.State.MENU); 
+					parent.play_bgm("menu_bgm.mp3"); 
+					parent.profile().write_profile();
+				} 
 				break;
 		}
 	}
@@ -385,6 +404,14 @@ public class AppCore {
 			start.add(wty); end.add(wty); key.add((int)id - 20);
 			if (has(w_lookup, (int)id - 20)) histc.add(new Color(68, 104, 148));
 			else histc.add(new Color(34, 70, 113));
+		}
+	}
+	
+	public synchronized void h_note_pressed(byte id, byte vel) {
+		if (vel > vel_thresh && curr_state > 0) {
+			start.add(wty); end.add(wty); key.add((int)id - 20);
+			if (has(w_lookup, (int)id - 20)) histc.add(Color.LIGHT_GRAY);
+			else histc.add(Color.DARK_GRAY);
 		}
 	}
 	

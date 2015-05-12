@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Scanner;
 
@@ -69,10 +70,17 @@ public class Profile {
 		if (!map.containsKey(in.code())) return null;
 		HashMap<String, Integer> spec = map.get(in.code());
 		HashMap<Chord, Double> ret = new HashMap<Chord, Double>();
-		int total = 0; int[] tracks = new int[4];
-		for (Integer i : spec.values()) total += i;
-		for (String s : spec.keySet()) {
-			Chord c = new Chord(s);
+		int total = 0; int[] tracks = new int[num];
+		ArrayList<Integer> tmp = new ArrayList<Integer>();
+		for (Integer i : spec.values()) {
+			total += i;	tmp.add(i);
+		}
+		Collections.sort(tmp);
+		for (int i = 0; i < tracks.length; i++) if (i < tmp.size()) tracks[i] = tmp.get(tmp.size()-i-1);
+		for (int i = 0; i < tracks.length; i++) {
+			for (String s : spec.keySet()) {
+				if (spec.get(s) == tracks[i]) ret.put(new Chord(s), (double)tracks[i]/(double)total);
+			}
 		}
 		return ret;
 	}
@@ -95,6 +103,7 @@ public class Profile {
 	public static void main(String [] args) {
 		Profile p1 = new Profile("profile\\profile1p.dat");
 		System.out.println(p1.map.toString());
+		System.out.println(p1.next_chords(new Chord("1-100M"), 3));
 		p1.write_profile();
 	}
 	

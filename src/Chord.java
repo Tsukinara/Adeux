@@ -154,6 +154,24 @@ public class Chord {
 		}
 	}
 	
+	public char equivalent_qual() {
+		switch (code.charAt(0)) {
+			case 'C': return 'M';
+			case 'F': return 'M';
+			case 'S': return qual;
+			default: return qual;
+		}
+	}
+	
+	public int equvalent_base() {
+		switch (code.charAt(0)) {
+			case 'C': return Music.majIndexOf(base);
+			case 'F': return Music.majIndexOf((base+3)%7+1);
+			case 'S': return Music.majIndexOf(base);
+			default: return base_index();
+		}
+	}
+	
 	public int get_seven() {
 		if (code.charAt(0) == 'C') return -1;
 		if (!seven) return -1;
@@ -181,8 +199,13 @@ public class Chord {
 				if (!seven) return new int[] { (ind+7)%12, (ind+2)%12, (ind+11)%12 };
 				else return new int[] { (ind+7)%12, (ind+2)%12, (ind+11)%12, get_seven() };
 			case 'S':
-
+				if (!seven && susp == 2) return new int[] { ind, Music.majIndexOf(base%7+1), Music.majIndexOf((base+3)%7+1) };
+				if (!seven && susp == 4) return new int[] { ind, Music.majIndexOf((base+2)%7+1), Music.majIndexOf((base+4)%7+1) };
+				if (seven && susp == 2) return new int[] { ind, Music.majIndexOf(base%7+1), Music.majIndexOf((base+3)%7+1), get_seven() };
+				if (seven && susp == 4) return new int[] { ind, Music.majIndexOf((base+2)%7+1), Music.majIndexOf((base+4)%7+1), get_seven() };
+				else return new int[0];
 			case 'C':
+				return new int[] { (ind+7)%12, ind, qual == 'M' ? (ind+4)%12 : (ind+3)%12 };
 			default: 
 				switch(qual) {
 					case 'd': 

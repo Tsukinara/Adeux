@@ -50,7 +50,25 @@ public class Harmonizer {
 		}
 	}	
 	
-	public void match_melody_to(Chord c) {
+	public void match_melody_to(Chord c, int[]nexts) {
+		int root_ind = c.equvalent_base();
+		if (melodies.containsKey(root_ind)) {
+			ArrayList<Melody> candidates = melodies.get(root_ind);
+			if (candidates.size() == 0) { System.err.println("Unable to find harmony for: " + c.toString()); return; }
+			ArrayList<Melody> finals = new ArrayList<Melody>();
+			for (int i : nexts) {
+				for (Melody m : candidates) if (m.next_index == i) finals.add(m);
+			}
+			if (finals.size() == 0) {
+				System.err.println("Unable to find perfect harmony. Using arbitrary harmony.");
+				int index = (int)(Math.random() * candidates.size());
+				this.curr_melody = candidates.get(index);
+			} else {
+				int index = (int)(Math.random() * finals.size());
+				this.curr_melody = finals.get(index);
+			}
+		}
+		else System.err.println("Unable to find harmony for: " + c.toString());
 		this.curr_melody = melodies.get(0).get(0);
 	}
 	
@@ -100,11 +118,17 @@ public class Harmonizer {
 		}
 	}
 	
+	public boolean is_held(int val, int kkey) {
+		int base;
+		if (curr_melody.type == Melody.Type.TREBLE) base = treble_base;
+		else base = bass_base;
+		return curr_held.contains(val + 20 - kkey - base);
+	}
 	
 	public static void main(String[] args) {
 		Harmonizer h = new Harmonizer("resources\\synthesis.dat");
 		System.out.println(h.melodies.toString());
-		h.match_melody_to(null);
+		h.match_melody_to(null, new int[] { 2 });
 		for (int i = 0; (double)i/Math.PI < 60; i++) {
 			System.out.println(i);
 			try {

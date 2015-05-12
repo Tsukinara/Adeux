@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 public class Analyzer {
 	private final static int[] maj_arr = {2, 4, 5, 7, 9, 11};
@@ -35,11 +36,6 @@ public class Analyzer {
 			top = circ_shift(top);
 		}
 		if (base == -1 && history.size() < 10) return null;
-		if (base == -1) {
-			ArrayList<Note> new_list = new ArrayList<Note>();
-			new_list.addAll(history.subList(history.size()/2, history.size()));
-			return get_key_signature(new_list, curr);
-		}
 		if (curr != null) {
 			int curr_base = Music.getKey(curr.key + "" + curr.type);
 			if (curr_base == base + 7 && has(hist, (base+6)%12))
@@ -47,6 +43,7 @@ public class Analyzer {
 			if (curr_base == base + 6 && has(hist, (base+10)%12))
 				if (last_index_of(hist, (base+10)%12) > last_index_of(hist, (base+11)%12)) return curr;
 		}
+		if (maj == false) { maj = true; base = (base+3)%12; }
 		return new KeySignature(Music.getSimplestKey(base), maj);
 	}
 	
@@ -168,6 +165,14 @@ public class Analyzer {
 		int[] out = new int[in.length];
 		for (int i = 1; i < in.length; i++) out[i-1] = in[i];
 		out[in.length-1] = in[0]; return out;
+	}
+	
+	public static int get_tempo(ArrayList<Long> chord_history_t, int num_beats) {
+		ArrayList<Long> times = new ArrayList<Long>();
+		for (int i = 1; i < chord_history_t.size() - 1; i++)
+			times.add(chord_history_t.get(i) - chord_history_t.get(i-1));
+		Collections.sort(times);
+		return 140;
 	}
 	
 	public static Chord get_chord(ArrayList<Note> rel, ArrayList<Note> all, byte dom, KeySignature key, Chord curr) {
