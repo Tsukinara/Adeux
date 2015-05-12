@@ -1,6 +1,9 @@
 import java.util.ArrayList;
 
 public class Melody {
+	private final static int treble_base = 57;
+	private final static int bass_base = 33;
+	
 	public int start_index, start_octave;
 	public int next_index;
 	public int chord_index;
@@ -54,7 +57,7 @@ public class Melody {
 			if (time >= times[i] && time < times[i] + lens[i]) tmp.add(i);
 		}
 		int[] ret = new int[tmp.size()];
-		for (int i = 0; i < tmp.size(); i++) ret[i] = notes[tmp.get(i)];
+		for (int i = 0; i < tmp.size(); i++) ret[i] = notes[tmp.get(i)] + (type == Type.TREBLE ? treble_base : bass_base);
 		return ret;
 	}
 	

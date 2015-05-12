@@ -65,7 +65,7 @@ public class Display extends JFrame implements Runnable {
 
 	public Display() {
 		super(DEFAULT_TITLE);
-		this.state = State.MAIN;
+		this.state = State.PROFILE;
 		this.sfxplayer = null; this.mscplayer = null;
 		this.width = s_width; this.height = s_height;
 		this.set = new Settings(new File(settings));

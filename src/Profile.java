@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Scanner;
 
 public class Profile {
-	private HashMap<String, HashMap<String, Integer>> map;
+	protected HashMap<String, HashMap<String, Integer>> map;
 	public String name;
 	
 	public Profile() {
@@ -36,6 +36,7 @@ public class Profile {
 		if (!map.containsKey(in.code())) {
 			HashMap<String, Integer> nC = new HashMap<String, Integer>();
 			nC.put(out.code(), 1);
+			map.put(in.code(), nC);
 		} else {
 			if (!map.get(in.code()).containsKey(out.code())) {
 				map.get(in.code()).put(out.code(), 1);
@@ -70,6 +71,7 @@ public class Profile {
 	public HashMap<Chord, Double> next_chords(Chord in, int num) {
 		if (!map.containsKey(in.code())) return null;
 		HashMap<String, Integer> spec = map.get(in.code());
+		if (spec.values().size() < num) num = spec.values().size();
 		HashMap<Chord, Double> ret = new HashMap<Chord, Double>();
 		int total = 0; int[] tracks = new int[num];
 		ArrayList<Integer> tmp = new ArrayList<Integer>();
@@ -77,10 +79,15 @@ public class Profile {
 			total += i;	tmp.add(i);
 		}
 		Collections.sort(tmp);
-		for (int i = 0; i < tracks.length; i++) if (i < tmp.size()) tracks[i] = tmp.get(tmp.size()-i-1);
-		for (int i = 0; i < tracks.length; i++) {
+		ArrayList<String> marks = new ArrayList<String>();
+		System.out.println("NUM:" + num);
+		for (int i = 0; i < num; i++) if (i < tmp.size()) tracks[i] = tmp.get(tmp.size()-i-1);
+		for (int i = 0; i < num; i++) {
 			for (String s : spec.keySet()) {
-				if (spec.get(s) == tracks[i]) ret.put(new Chord(s), (double)tracks[i]/(double)total);
+				if (spec.get(s) == tracks[i] && !marks.contains(s)) {
+					ret.put(new Chord(s), (double)tracks[i]/(double)total);
+					marks.add(s);
+				}
 			}
 		}
 		return ret;

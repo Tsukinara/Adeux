@@ -11,19 +11,18 @@ import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Receiver;
 import javax.sound.midi.ShortMessage;
 
-public class Harmonizer {
-	private final static int treble_base = 57;
-	private final static int bass_base = 31;
-	
+public class Harmonizer {	
 	private Receiver midiReceiver;
 	private static final int std_vel = 127;
 	private Melody curr_melody;
 	private Melody bass_melody;
 	private ArrayList<Integer> curr_held;
+	private AppCore parent;
 	
 	public HashMap<Integer, ArrayList<Melody>> melodies;
 	
-	public Harmonizer (String filename) {
+	public Harmonizer (AppCore parent, String filename) {
+		this.parent = parent;
 		this.curr_held = new ArrayList<Integer>();
 		this.melodies = new HashMap<Integer, ArrayList<Melody>>();
 		ArrayList<String> melodies = new ArrayList<String>();
@@ -52,62 +51,84 @@ public class Harmonizer {
 	}	
 	
 	public void match_melody_to(Chord c, int[]nexts) {
+		if (c == null) return;
 		int root_ind = c.equvalent_base();
-		if (melodies.containsKey(root_ind)) {
+		if (nexts.length == 0 && melodies.containsKey(root_ind)) {
 			ArrayList<Melody> t_cs = melodies.get(root_ind);
 			ArrayList<Melody> b_cs = new ArrayList<Melody>();
-			if (t_cs.size() == 0) { System.err.println("Unable to find harmony for: " + c.toString()); return; }
+			if (t_cs.size() == 0) { 
+				// System.err.println("Unable to find harmony for: " + c.toString()); 
+				curr_melody = null;
+				bass_melody = null;
+				return; 
+			}
+			for (int i = 0; i < t_cs.size(); i++) 
+				if (t_cs.get(i).type == Melody.Type.BASS) b_cs.add(t_cs.remove(i--));
+			if (b_cs.size() != 0) this.bass_melody = b_cs.get((int)(Math.random() * b_cs.size()));
+			if (t_cs.size() != 0) this.curr_melody = t_cs.get((int)(Math.random() * t_cs.size()));
+		}
+		else if (melodies.containsKey(root_ind)) {
+			ArrayList<Melody> t_cs = melodies.get(root_ind);
+			ArrayList<Melody> b_cs = new ArrayList<Melody>();
+			
+			if (t_cs.size() == 0) { 
+				// System.err.println("Unable to find harmony for: " + c.toString()); 
+				curr_melody = null;
+				bass_melody = null;
+				return; 
+			}
 			for (int i = 0; i < t_cs.size(); i++) 
 				if (t_cs.get(i).type == Melody.Type.BASS) b_cs.add(t_cs.remove(i--));
 			
-			this.bass_melody = b_cs.get((int)(Math.random() * b_cs.size()));
+			if (b_cs.size() != 0) this.bass_melody = b_cs.get((int)(Math.random() * b_cs.size()));
 			ArrayList<Melody> finals = new ArrayList<Melody>();
 			for (int i : nexts) {
 				for (Melody m : t_cs) if (m.next_index == i) finals.add(m);
 			}
+			System.out.println("FINALS: " + finals + " : " + finals.size());
 			if (finals.size() == 0) {
 				System.err.println("Unable to find perfect harmony. Using arbitrary harmony.");
 				int index = (int)(Math.random() * t_cs.size());
 				this.curr_melody = t_cs.get(index);
 			} else {
-				int index = (int)(Math.random() * finals.size());
-				this.curr_melody = finals.get(index);
+				System.out.println("here");
+				this.curr_melody = finals.get((int)(Math.random() * finals.size()));
+				System.out.println(curr_melody);
 			}
 		}
-		else System.err.println("Unable to find harmony for: " + c.toString());
-		this.curr_melody = melodies.get(0).get(0);
+		else {
+			// System.err.println("Unable to find harmony for: " + c.toString());
+			bass_melody = null;
+			curr_melody = null;
+		}
 	}
 	
 	public void play_melody(double time, int kkey) {
-		int[] bnotes = bass_melody.get_held_notes(time);
-		int[] notes = curr_melody.get_held_notes(time);
+		int[] bnotes = (bass_melody != null ? bass_melody.get_held_notes(time) : new int[0] );
+		int[] notes = (curr_melody != null ? curr_melody.get_held_notes(time) : new int[0] );
 		for (int i : notes)
 			if (!curr_held.contains(i)) {
-				play_note(i + treble_base + kkey, std_vel);
+				play_note(i + kkey, std_vel);
 				curr_held.add(i);
+				parent.h_note_pressed((byte)(i+kkey), (byte)std_vel);
 			}
 		for (int i : bnotes)
 			if (!curr_held.contains(i)) {
-				play_note(i + bass_base + kkey, std_vel);
+				play_note(i + kkey, std_vel);
 				curr_held.add(i);
+				parent.h_note_pressed((byte)(i+kkey), (byte)std_vel);
 			}
 		for (int i = 0; i < curr_held.size(); i++) {
-			if (!has(notes, (int)curr_held.get(i))) {
-				stop_note(curr_held.get(i) + treble_base + kkey, 0);
-				curr_held.remove(i);
-			}
-			if (!has(bnotes, (int)curr_held.get(i))) {
-				stop_note(curr_held.get(i) + bass_base + kkey, 0);
+			if (!has(bnotes, (int)curr_held.get(i)) && !has(notes, (int)curr_held.get(i))) {
+				stop_note(curr_held.get(i) + + kkey, 0);
 				curr_held.remove(i);
 			}
 		}
-		
 	}
 	
 	private static boolean has(int[] in, int k) { boolean f = false; for (int i : in) if (i == k) f = true; return f; }
 	
 	public void play_note(int note, int velocity) {
-		System.out.println("PLAYING NOTE: " + note);
 		try{
 			ShortMessage myMsg = new ShortMessage();
 			myMsg.setMessage(ShortMessage.NOTE_ON, 0, note, velocity);
@@ -119,7 +140,6 @@ public class Harmonizer {
 	}
 	
 	public void stop_note(int note, int velocity) {
-		System.out.println("RELEASING NOTE: " + note);
 		try{
 			ShortMessage myMsg = new ShortMessage();
 			myMsg.setMessage(ShortMessage.NOTE_OFF, 0, note, velocity);
@@ -131,21 +151,18 @@ public class Harmonizer {
 	}
 	
 	public boolean is_held(int val, int kkey) {
-		int base;
-		if (curr_melody.type == Melody.Type.TREBLE) base = treble_base;
-		else base = bass_base;
-		return curr_held.contains(val + 20 - kkey - base);
+		return curr_held.contains(val + 20 - kkey);
 	}
 	
 	public static void main(String[] args) {
-		Harmonizer h = new Harmonizer("resources\\synthesis.dat");
-		System.out.println(h.melodies.toString());
-		h.match_melody_to(null, new int[] { 2 });
-		for (int i = 0; (double)i/Math.PI < 60; i++) {
+		Harmonizer h = new Harmonizer(null, "resources\\synthesis.dat");
+		h.match_melody_to(new Chord("1-100M"), new int[] { 7 });
+		System.out.println(h.curr_melody);
+		for (int i = 0; i < 60; i++) {
 			System.out.println(i);
 			try {
-				h.play_melody((double)i/Math.PI, Music.getKey("C"));
-				Thread.sleep(10);
+				h.play_melody(i, Music.getKey("C"));
+				Thread.sleep(50);
 			} catch (Exception e) {e.printStackTrace();}
 		}
 	}
