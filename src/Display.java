@@ -65,7 +65,7 @@ public class Display extends JFrame implements Runnable {
 
 	public Display() {
 		super(DEFAULT_TITLE);
-		this.state = State.PROFILE;
+		this.state = State.LOADING;
 		this.sfxplayer = null; this.mscplayer = null;
 		this.width = s_width; this.height = s_height;
 		this.set = new Settings(new File(settings));
@@ -121,6 +121,18 @@ public class Display extends JFrame implements Runnable {
 				//System.exit(0);
 			}
 		});
+	}
+	
+	public void reset() {
+		s_ls = new LoadingScreen(this);
+		s_mn = new Menu(this);
+		s_ac = new AppCore(this);
+		s_sm = new SettingsMenu(this);
+		s_ps = new ProfileSelect(this);
+		
+		this.state = State.LOADING;
+		this.sfxplayer = null; this.mscplayer = null;
+		this.width = s_width; this.height = s_height;
 	}
 	
 	private void calculate_offsets() {

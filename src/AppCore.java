@@ -346,7 +346,7 @@ public class AppCore {
 		switch (e.getKeyCode()) {
 			case KeyEvent.VK_ESCAPE: case KeyEvent.VK_X: if (curr_state == 1) curr_state = 2; break;
 			case KeyEvent.VK_R: nb.reinit(); break;
-			case KeyEvent.VK_SPACE: flag_analysis = true;
+			case KeyEvent.VK_SPACE: parent.reset(); break;
 		}
 	}
 	
